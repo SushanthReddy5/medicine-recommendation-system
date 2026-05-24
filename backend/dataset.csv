@@ -1,0 +1,154 @@
+symptoms,disease,medicine,description,side_effects,severity
+fever,Flu,Paracetamol,Take 500mg every 6 hours with water,Nausea rare,mild
+fever body ache,Flu,Paracetamol,Take 500mg every 6 hours and rest,Nausea rare,mild
+fever chills,Flu,Paracetamol,Take 500mg every 6 hours stay warm,Nausea rare,mild
+fever runny nose,Flu,Paracetamol,Take 500mg and drink warm fluids,Nausea rare,mild
+cough,Cold,Cough Syrup,Take 10ml three times a day,Drowsiness,mild
+cough runny nose,Cold,Cough Syrup,Take 10ml with warm water three times daily,Drowsiness,mild
+cough sneezing,Cold,Antihistamine,Take 1 tablet at bedtime,Drowsiness,mild
+cough mild fever,Cold,Cough Syrup,Take 10ml and rest well,Drowsiness,mild
+headache,Migraine,Ibuprofen,Take 400mg every 8 hours after food,Stomach upset,moderate
+headache nausea,Migraine,Ibuprofen,Take 400mg with food and rest in dark room,Stomach upset,moderate
+headache light sensitivity,Migraine,Sumatriptan,Take 50mg at onset of migraine,Dizziness,moderate
+headache vomiting nausea,Migraine,Sumatriptan,Take 50mg at onset and lie down,Dizziness chest tightness,moderate
+stomach pain,Acidity,Antacid,Take 1 tablet after meals,Constipation rare,mild
+stomach pain bloating,Acidity,Antacid,Take 1 tablet after meals with water,Constipation rare,mild
+stomach pain burning,Acidity,Omeprazole,Take 20mg before breakfast daily,Headache rare,mild
+stomach pain nausea,Gastritis,Omeprazole,Take 20mg before breakfast daily for 4 weeks,Headache rare,moderate
+stomach pain nausea vomiting,Gastritis,Omeprazole,Take 20mg before breakfast. Avoid spicy food,Headache rare,moderate
+stomach pain indigestion,Gastritis,Omeprazole,Take 20mg before breakfast. Eat smaller meals,Headache rare,moderate
+sore throat,Throat Infection,Lozenges,Dissolve 1 lozenge every 3-4 hours,None significant,mild
+sore throat pain,Throat Infection,Lozenges,Dissolve 1 lozenge every 3-4 hours with warm water,None,mild
+sore throat fever,Strep Throat,Amoxicillin,Take 500mg three times daily for 10 days,Diarrhea possible,moderate
+sore throat cough fever,Strep Throat,Amoxicillin,Take 500mg three times daily for 10 days,Diarrhea possible,moderate
+runny nose sneezing,Cold,Antihistamine,Take 1 tablet at bedtime,Drowsiness,mild
+runny nose itchy eyes,Allergic Rhinitis,Cetirizine,Take 10mg once daily at night,Drowsiness dry mouth,mild
+runny nose sneezing itchy eyes,Allergic Rhinitis,Cetirizine,Take 10mg once daily at night,Drowsiness,mild
+runny nose sneezing dust allergy,Allergic Rhinitis,Cetirizine,Take 10mg once daily. Avoid allergens,Drowsiness,mild
+fever headache body ache,Dengue,Paracetamol,Seek doctor immediately. Take 500mg for fever only,Avoid NSAIDs,severe
+fever rash joint pain,Dengue,Paracetamol,Rest and hydrate. Avoid aspirin and ibuprofen,Avoid NSAIDs,severe
+fever severe headache eye pain,Dengue,Paracetamol,Go to doctor. Take only Paracetamol for fever,Avoid NSAIDs,severe
+fever rash body ache fatigue,Dengue,Paracetamol,Rest hydrate and seek medical care urgently,Avoid NSAIDs,severe
+chest pain shortness of breath,Angina,Nitroglycerin,Place under tongue during episode. Seek emergency,Headache,severe
+chest tightness pain,Angina,Nitroglycerin,Place under tongue. Seek emergency care,Headache flushing,severe
+chest pain left arm pain,Angina,Nitroglycerin,Seek emergency immediately. Call ambulance,Headache,severe
+chest tightness wheezing cough,Asthma,Salbutamol Inhaler,Use 1-2 puffs when needed. Max 4 times per day,Tremor palpitations,severe
+shortness of breath wheezing,Asthma,Salbutamol Inhaler,Use 1-2 puffs when needed,Tremor,severe
+wheezing cough breathlessness,Asthma,Salbutamol Inhaler,Use 1-2 puffs. Seek doctor if no relief,Tremor palpitations,severe
+shortness of breath exertion,Asthma,Salbutamol Inhaler,Use inhaler before exercise if needed,Tremor,moderate
+back pain stiffness,Muscle Strain,Diclofenac,Apply gel topically or take 50mg tablet twice daily,GI upset,moderate
+back pain lower,Muscle Strain,Diclofenac,Apply gel topically twice daily,GI upset,moderate
+back pain lifting,Muscle Strain,Diclofenac,Rest and apply Diclofenac gel twice daily,GI upset,moderate
+back pain muscle spasm,Muscle Strain,Diclofenac,Take 50mg tablet twice daily with food,GI upset,moderate
+joint pain swelling,Arthritis,Naproxen,Take 250mg twice daily with food,Stomach upset,moderate
+joint pain stiffness,Arthritis,Naproxen,Take 250mg twice daily with food,Stomach upset,moderate
+joint pain morning stiffness,Arthritis,Naproxen,Take 250mg twice daily. Do gentle exercises,Stomach upset,moderate
+joint pain knees,Arthritis,Naproxen,Take 250mg twice daily with food and water,Stomach upset,moderate
+skin rash itching,Allergy,Hydrocortisone Cream,Apply thin layer twice daily to affected area,Skin thinning,mild
+skin rash redness,Allergy,Hydrocortisone Cream,Apply thin layer twice daily,Skin thinning,mild
+skin itching hives,Allergy,Cetirizine,Take 10mg once daily at night,Drowsiness,mild
+skin rash swelling itching,Allergy,Cetirizine,Take 10mg once daily. Avoid allergen,Drowsiness,mild
+diarrhea vomiting,Gastroenteritis,ORS,Dissolve one sachet in 1L water. Stay hydrated,None,moderate
+diarrhea loose stools,Gastroenteritis,ORS,Dissolve one sachet in 1L water,None,moderate
+diarrhea stomach cramps,Gastroenteritis,ORS,Dissolve one sachet in 1L water. Rest well,None,moderate
+diarrhea vomiting fever,Gastroenteritis,ORS,Dissolve sachet in water and rest. See doctor,None,moderate
+dizziness nausea,Vertigo,Betahistine,Take 8mg three times daily with food,Nausea mild,moderate
+dizziness spinning,Vertigo,Betahistine,Take 8mg three times daily with food,Nausea,moderate
+dizziness balance loss,Vertigo,Betahistine,Take 8mg three times daily,Nausea mild,moderate
+dizziness headache,Vertigo,Betahistine,Take 8mg three times daily with food,Nausea,moderate
+fatigue weakness,Anemia,Iron Supplement,Take 1 tablet daily on empty stomach with Vitamin C,Constipation,moderate
+fatigue pale skin,Anemia,Iron Supplement,Take iron with Vitamin C for better absorption,Dark stools,moderate
+fatigue tiredness breathlessness,Anemia,Iron Supplement,Take 1 tablet daily. Eat iron rich foods,Constipation,moderate
+fatigue weakness pale,Anemia,Iron Supplement,Take iron supplement daily with orange juice,Constipation,moderate
+high blood pressure headache,Hypertension,Amlodipine,Take 5mg once daily. Monitor BP regularly,Ankle swelling,severe
+high blood pressure dizziness,Hypertension,Amlodipine,Take 5mg once daily. Reduce salt intake,Ankle swelling,severe
+high blood pressure fatigue,Hypertension,Amlodipine,Take 5mg once daily. Exercise regularly,Ankle swelling,severe
+high blood pressure chest pain,Hypertension,Amlodipine,Take 5mg once daily. Seek doctor urgently,Ankle swelling,severe
+frequent urination thirst fatigue,Type 2 Diabetes,Metformin,Take 500mg twice daily with meals,Nausea GI upset,severe
+frequent urination thirst,Type 2 Diabetes,Metformin,Take 500mg twice daily with meals,Nausea,severe
+frequent urination weight loss thirst,Type 2 Diabetes,Metformin,Take 500mg twice daily. Monitor blood sugar,Nausea,severe
+frequent urination blurred vision,Type 2 Diabetes,Metformin,Take 500mg twice daily. Check eyes regularly,Nausea,severe
+anxiety restlessness,Anxiety Disorder,Sertraline,Take 50mg once daily in the morning,Nausea first 2 weeks,moderate
+anxiety palpitations,Anxiety Disorder,Sertraline,Take 50mg once daily in the morning,Nausea,moderate
+anxiety sweating trembling,Anxiety Disorder,Sertraline,Take 50mg once daily. Takes 2 weeks to work,Nausea insomnia,moderate
+anxiety panic attacks,Anxiety Disorder,Sertraline,Take 50mg once daily in the morning,Nausea,moderate
+depression fatigue low mood,Depression,Fluoxetine,Take 20mg once daily in the morning,Insomnia initially,moderate
+depression sadness hopelessness,Depression,Fluoxetine,Take 20mg once daily. Takes 4-6 weeks,Insomnia,moderate
+depression loss of interest,Depression,Fluoxetine,Take 20mg once daily in the morning,Nausea insomnia,moderate
+depression sleep problems,Depression,Fluoxetine,Take 20mg once daily in the morning,Insomnia initially,moderate
+burning urination frequency,Urinary Tract Infection,Nitrofurantoin,Take 100mg twice daily for 5 days,Nausea,moderate
+burning urination pain,Urinary Tract Infection,Nitrofurantoin,Take 100mg twice daily for 5 days,Nausea,moderate
+burning urination cloudy urine,Urinary Tract Infection,Nitrofurantoin,Take 100mg twice daily for 5 days,Nausea,moderate
+burning urination fever,Urinary Tract Infection,Nitrofurantoin,Take 100mg twice daily for 5 days urgently,Nausea,moderate
+eye redness discharge,Conjunctivitis,Chloramphenicol Eye Drops,Apply 2 drops 4 times daily for 5 days,Brief stinging,mild
+eye redness itching,Conjunctivitis,Chloramphenicol Eye Drops,Apply 2 drops 4 times daily,Brief stinging,mild
+eye redness watering,Conjunctivitis,Chloramphenicol Eye Drops,Apply 2 drops 4 times daily,Stinging,mild
+eye redness crusty,Conjunctivitis,Chloramphenicol Eye Drops,Apply 2 drops 4 times daily. Clean eye gently,Stinging,mild
+ear pain fever,Ear Infection,Amoxicillin,Take 500mg three times daily for 7 days,Diarrhea possible,moderate
+ear pain throbbing,Ear Infection,Amoxicillin,Take 500mg three times daily for 7 days,Diarrhea,moderate
+ear pain hearing loss,Ear Infection,Amoxicillin,Take 500mg three times daily for 7 days,GI upset,moderate
+ear pain discharge,Ear Infection,Amoxicillin,Take 500mg three times daily for 10 days,GI upset,moderate
+fatigue weight gain cold,Hypothyroidism,Levothyroxine,Take 50mcg once daily before breakfast,Palpitations if overdosed,severe
+fatigue weight gain constipation,Hypothyroidism,Levothyroxine,Take 50mcg once daily before breakfast,Palpitations,severe
+fatigue cold intolerance weight gain,Hypothyroidism,Levothyroxine,Take 50mcg once daily before breakfast,Palpitations,severe
+fatigue dry skin weight gain,Hypothyroidism,Levothyroxine,Take 50mcg once daily before breakfast,Palpitations,severe
+weight loss sweating palpitations,Hyperthyroidism,Carbimazole,Take 20mg once daily. Regular thyroid monitoring,Rash rare,severe
+weight loss sweating anxiety,Hyperthyroidism,Carbimazole,Take 20mg once daily. Monitor thyroid levels,Rash,severe
+weight loss heat intolerance,Hyperthyroidism,Carbimazole,Take 20mg once daily. Check thyroid regularly,Rash,severe
+weight loss rapid heartbeat,Hyperthyroidism,Carbimazole,Take 20mg once daily. Seek endocrinologist,Rash,severe
+insomnia restlessness,Sleep Disorder,Melatonin,Take 3mg tablet 30 minutes before bedtime,Morning grogginess,mild
+insomnia trouble sleeping,Sleep Disorder,Melatonin,Take 3mg tablet 30 minutes before sleep,Grogginess,mild
+insomnia anxiety sleep,Sleep Disorder,Melatonin,Take 3mg at bedtime. Avoid screens before bed,Grogginess,mild
+insomnia waking up,Sleep Disorder,Melatonin,Take 3mg at bedtime. Keep consistent sleep schedule,Grogginess,mild
+chest pain cough fever,Pneumonia,Azithromycin,Take 500mg once daily for 5 days. Rest well,Nausea diarrhea,severe
+cough fever breathlessness,Pneumonia,Azithromycin,Take 500mg once daily for 5 days,Nausea,severe
+cough green sputum fever,Pneumonia,Azithromycin,Take 500mg once daily for 5 days urgently,Nausea diarrhea,severe
+cough chest pain fever,Pneumonia,Azithromycin,Take 500mg once daily for 5 days,Nausea,severe
+toothache jaw swelling,Dental Infection,Amoxicillin,Take 500mg three times daily with Ibuprofen 400mg,GI upset,moderate
+toothache pain,Dental Infection,Ibuprofen,Take 400mg every 8 hours after food,Stomach upset,moderate
+toothache gum swelling,Dental Infection,Amoxicillin,Take 500mg three times daily for 5 days,GI upset,moderate
+toothache fever jaw,Dental Infection,Amoxicillin,Take 500mg three times daily. See dentist urgently,GI upset,moderate
+sneezing runny nose itchy eyes,Allergic Rhinitis,Cetirizine,Take 10mg once daily at night,Drowsiness,mild
+sneezing dust allergy,Allergic Rhinitis,Cetirizine,Take 10mg once daily. Avoid dust,Drowsiness,mild
+sneezing pollen allergy,Allergic Rhinitis,Cetirizine,Take 10mg once daily during allergy season,Drowsiness,mild
+sneezing itching nose,Allergic Rhinitis,Cetirizine,Take 10mg once daily at night,Drowsiness dry mouth,mild
+muscle cramps legs,Electrolyte Imbalance,Magnesium Supplement,Take 250mg tablet daily with water,Loose stools,mild
+muscle cramps night,Electrolyte Imbalance,Magnesium Supplement,Take 250mg tablet daily at bedtime,Loose stools,mild
+muscle cramps fatigue,Electrolyte Imbalance,Magnesium Supplement,Take 250mg tablet daily,Loose stools,mild
+muscle cramps weakness,Electrolyte Imbalance,Magnesium Supplement,Take 250mg tablet daily with water,Loose stools,mild
+acne pimples,Acne Vulgaris,Benzoyl Peroxide,Apply thin layer to affected area once daily,Dryness,mild
+acne oily skin,Acne Vulgaris,Benzoyl Peroxide,Apply thin layer once daily. Use oil free moisturizer,Dryness,mild
+acne pimples face,Acne Vulgaris,Benzoyl Peroxide,Apply thin layer to affected area once daily,Dryness irritation,mild
+acne blackheads whiteheads,Acne Vulgaris,Benzoyl Peroxide,Apply thin layer once daily at night,Dryness,mild
+palpitations racing heart,Arrhythmia,Metoprolol,Take 25mg twice daily. Monitor heart rate,Fatigue dizziness,severe
+palpitations dizziness,Arrhythmia,Metoprolol,Take 25mg twice daily. Monitor pulse,Fatigue,severe
+palpitations chest fluttering,Arrhythmia,Metoprolol,Take 25mg twice daily. See cardiologist,Fatigue dizziness,severe
+palpitations shortness of breath,Arrhythmia,Metoprolol,Take 25mg twice daily. Seek doctor,Fatigue,severe
+constipation hard stools,Constipation,Lactulose,Take 15ml twice daily with plenty of fluids,Bloating,mild
+constipation straining,Constipation,Lactulose,Take 15ml twice daily with fluids,Bloating,mild
+constipation bloating,Constipation,Lactulose,Take 15ml twice daily. Eat more fiber,Bloating,mild
+constipation no bowel movement,Constipation,Lactulose,Take 15ml twice daily with water,Bloating,mild
+low blood pressure dizziness,Hypotension,Fludrocortisone,Take 0.1mg once daily. Increase fluid intake,Fluid retention,moderate
+low blood pressure fainting,Hypotension,Fludrocortisone,Take 0.1mg once daily. Rise slowly from sitting,Fluid retention,moderate
+low blood pressure weakness,Hypotension,Fludrocortisone,Take 0.1mg once daily. Stay hydrated,Fluid retention,moderate
+low blood pressure nausea,Hypotension,Fludrocortisone,Take 0.1mg once daily. Eat small frequent meals,Fluid retention,moderate
+swollen feet ankles,Edema,Furosemide,Take 40mg once daily in the morning,Frequent urination,moderate
+swollen legs feet,Edema,Furosemide,Take 40mg once daily in the morning,Frequent urination,moderate
+swollen ankles pitting,Edema,Furosemide,Take 40mg once daily. Elevate legs,Frequent urination,moderate
+swollen feet fatigue,Edema,Furosemide,Take 40mg once daily. Reduce salt intake,Frequent urination,moderate
+dry skin itching,Eczema,Emollient Cream,Apply liberally to affected areas twice daily,None significant,mild
+dry skin redness,Eczema,Emollient Cream,Apply liberally twice daily,None,mild
+dry skin flaking,Eczema,Emollient Cream,Apply liberally twice daily. Avoid hot showers,None,mild
+dry skin cracked,Eczema,Emollient Cream,Apply liberally twice daily. Keep skin moisturized,None,mild
+hair loss thinning,Alopecia,Minoxidil,Apply 1ml to scalp twice daily. Results in 3 months,Scalp irritation,moderate
+hair loss scalp,Alopecia,Minoxidil,Apply 1ml to scalp twice daily,Scalp irritation,moderate
+hair loss patchy,Alopecia,Minoxidil,Apply 1ml to scalp twice daily. See dermatologist,Scalp irritation,moderate
+hair loss diffuse,Alopecia,Minoxidil,Apply 1ml to scalp twice daily,Irritation,moderate
+fever malaria chills,Malaria,Artemether-Lumefantrine,Take full course as prescribed. Seek doctor urgently,Nausea dizziness,severe
+fever chills sweating,Malaria,Artemether-Lumefantrine,Take full course as prescribed,Nausea,severe
+fever rigors sweating,Malaria,Artemether-Lumefantrine,Seek doctor immediately. Take full course,Nausea dizziness,severe
+fever chills headache malaria,Malaria,Artemether-Lumefantrine,Seek doctor immediately. Full course only,Nausea,severe
+mouth ulcers pain,Aphthous Stomatitis,Benzocaine Gel,Apply small amount to ulcer up to 4 times daily,Numbness,mild
+mouth ulcers eating difficulty,Aphthous Stomatitis,Benzocaine Gel,Apply small amount to ulcer 4 times daily,Local numbness,mild
+mouth ulcers recurring,Aphthous Stomatitis,Benzocaine Gel,Apply small amount to ulcer. Use vitamin B12,Numbness,mild
+mouth ulcers sore,Aphthous Stomatitis,Benzocaine Gel,Apply small amount to ulcer as needed,Numbness local,mild

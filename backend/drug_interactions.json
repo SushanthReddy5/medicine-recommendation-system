@@ -1,0 +1,148 @@
+{
+  "interactions": [
+    {
+      "drug1": "Ibuprofen",
+      "drug2": "Aspirin",
+      "severity": "high",
+      "description": "Taking Ibuprofen and Aspirin together increases risk of gastrointestinal bleeding and reduces effectiveness of Aspirin."
+    },
+    {
+      "drug1": "Ibuprofen",
+      "drug2": "Naproxen",
+      "severity": "high",
+      "description": "Two NSAIDs together significantly increase risk of stomach ulcers, bleeding and kidney damage."
+    },
+    {
+      "drug1": "Ibuprofen",
+      "drug2": "Diclofenac",
+      "severity": "high",
+      "description": "Combining two NSAIDs increases risk of gastrointestinal bleeding and kidney problems."
+    },
+    {
+      "drug1": "Paracetamol",
+      "drug2": "Alcohol",
+      "severity": "high",
+      "description": "Combining Paracetamol with alcohol severely increases risk of liver damage."
+    },
+    {
+      "drug1": "Metformin",
+      "drug2": "Alcohol",
+      "severity": "high",
+      "description": "Alcohol with Metformin increases risk of lactic acidosis — a dangerous condition."
+    },
+    {
+      "drug1": "Amoxicillin",
+      "drug2": "Methotrexate",
+      "severity": "high",
+      "description": "Amoxicillin can increase Methotrexate toxicity leading to serious side effects."
+    },
+    {
+      "drug1": "Ciprofloxacin",
+      "drug2": "Antacid",
+      "severity": "moderate",
+      "description": "Antacids reduce absorption of Ciprofloxacin. Take Ciprofloxacin 2 hours before or 6 hours after antacids."
+    },
+    {
+      "drug1": "Sertraline",
+      "drug2": "Ibuprofen",
+      "severity": "moderate",
+      "description": "Combining Sertraline with Ibuprofen increases risk of bleeding, especially gastrointestinal."
+    },
+    {
+      "drug1": "Sertraline",
+      "drug2": "Fluoxetine",
+      "severity": "high",
+      "description": "Two SSRIs together can cause Serotonin Syndrome — a potentially life-threatening condition."
+    },
+    {
+      "drug1": "Fluoxetine",
+      "drug2": "Sertraline",
+      "severity": "high",
+      "description": "Two SSRIs together can cause Serotonin Syndrome — a potentially life-threatening condition."
+    },
+    {
+      "drug1": "Metoprolol",
+      "drug2": "Amlodipine",
+      "severity": "moderate",
+      "description": "Combining these can cause excessive lowering of blood pressure and heart rate. Monitor closely."
+    },
+    {
+      "drug1": "Furosemide",
+      "drug2": "Ibuprofen",
+      "severity": "moderate",
+      "description": "Ibuprofen reduces effectiveness of Furosemide and can worsen kidney function."
+    },
+    {
+      "drug1": "Warfarin",
+      "drug2": "Ibuprofen",
+      "severity": "high",
+      "description": "Ibuprofen significantly increases bleeding risk in patients taking Warfarin."
+    },
+    {
+      "drug1": "Warfarin",
+      "drug2": "Aspirin",
+      "severity": "high",
+      "description": "Aspirin and Warfarin together greatly increase risk of serious bleeding."
+    },
+    {
+      "drug1": "Amlodipine",
+      "drug2": "Metoprolol",
+      "severity": "moderate",
+      "description": "Can cause excessive lowering of blood pressure. Monitor blood pressure regularly."
+    },
+    {
+      "drug1": "Levothyroxine",
+      "drug2": "Antacid",
+      "severity": "moderate",
+      "description": "Antacids reduce absorption of Levothyroxine. Take Levothyroxine 4 hours apart from antacids."
+    },
+    {
+      "drug1": "Nitrofurantoin",
+      "drug2": "Antacid",
+      "severity": "low",
+      "description": "Antacids may slightly reduce absorption of Nitrofurantoin. Take 2 hours apart."
+    },
+    {
+      "drug1": "Doxycycline",
+      "drug2": "Antacid",
+      "severity": "high",
+      "description": "Antacids severely reduce absorption of Doxycycline. Take at least 2 hours apart."
+    },
+    {
+      "drug1": "Ibuprofen",
+      "drug2": "Paracetamol",
+      "severity": "low",
+      "description": "Generally safe to take together for short periods. However long-term use together may affect kidney function."
+    },
+    {
+      "drug1": "Cetirizine",
+      "drug2": "Alcohol",
+      "severity": "moderate",
+      "description": "Alcohol increases drowsiness caused by Cetirizine. Avoid driving or operating machinery."
+    },
+    {
+      "drug1": "Metronidazole",
+      "drug2": "Alcohol",
+      "severity": "high",
+      "description": "Causes severe nausea, vomiting, flushing and rapid heartbeat. Avoid alcohol completely during treatment."
+    },
+    {
+      "drug1": "Azithromycin",
+      "drug2": "Antacid",
+      "severity": "moderate",
+      "description": "Antacids reduce absorption of Azithromycin. Take 1 hour before or 2 hours after antacids."
+    },
+    {
+      "drug1": "Iron Supplement",
+      "drug2": "Antacid",
+      "severity": "moderate",
+      "description": "Antacids significantly reduce absorption of iron. Take iron 2 hours apart from antacids."
+    },
+    {
+      "drug1": "Omeprazole",
+      "drug2": "Metformin",
+      "severity": "low",
+      "description": "Omeprazole may slightly increase Metformin levels. Generally safe but monitor for Metformin side effects."
+    }
+  ]
+}
