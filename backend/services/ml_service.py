@@ -1,8 +1,9 @@
 import os
+import csv
 import pickle
 import numpy as np
-import pandas as pd
 from config import MODEL_DIR, DATA_PATH
+
 
 class MLService:
     def __init__(self):
@@ -11,18 +12,31 @@ class MLService:
         self.clf_medicine = None
         self.le_disease   = None
         self.le_medicine  = None
-        self.data         = None
+        self.data         = []          # list of dicts, replaces pd.DataFrame
+        self.disease_map  = {}          # {disease_name: row_dict} for fast lookup
         self.is_loaded    = False
         self._load_data()
         self._load_models()
 
+    # ── Data loading (csv module instead of pandas) ──────────────────────
+
     def _load_data(self):
         try:
-            self.data = pd.read_csv(DATA_PATH)
+            with open(DATA_PATH, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                self.data = [row for row in reader]
+            # build lookup dict
+            for row in self.data:
+                d = row.get("disease", "").strip()
+                if d and d not in self.disease_map:
+                    self.disease_map[d] = row
             print(f"✅ Dataset loaded: {len(self.data)} rows")
         except Exception as e:
             print(f"❌ Dataset load failed: {e}")
-            self.data = pd.DataFrame()
+            self.data        = []
+            self.disease_map = {}
+
+    # ── Model loading ─────────────────────────────────────────────────────
 
     def _load_models(self):
         try:
@@ -39,14 +53,20 @@ class MLService:
         except FileNotFoundError as e:
             print(f"⚠️  ML models not found: {e} — CSV fallback active")
 
+    # ── Helpers ───────────────────────────────────────────────────────────
+
     def normalize(self, s):
         parts = [x.strip().lower() for x in s.replace(",", " ").split()]
         return " ".join(sorted(set(parts)))
+
+    # ── Prediction entry point ────────────────────────────────────────────
 
     def predict(self, symptom_input, top_n=3):
         if self.is_loaded:
             return self._predict_ml(symptom_input, top_n)
         return self._predict_csv(symptom_input)
+
+    # ── ML path ───────────────────────────────────────────────────────────
 
     def _predict_ml(self, symptom_input, top_n=3):
         vec   = self.vectorizer.transform([self.normalize(symptom_input)])
@@ -56,16 +76,15 @@ class MLService:
         for idx in top:
             disease    = self.le_disease.classes_[idx]
             confidence = round(float(proba[idx]) * 100, 1)
-            match      = self.data[self.data["disease"] == disease]
-            if not match.empty:
-                row = match.iloc[0]
+            row        = self.disease_map.get(disease)
+            if row:
                 results.append({
                     "disease"     : disease,
                     "confidence"  : confidence,
-                    "medicine"    : row["medicine"],
-                    "description" : row["description"],
-                    "side_effects": row["side_effects"],
-                    "severity"    : row["severity"],
+                    "medicine"    : row.get("medicine", "Unknown"),
+                    "description" : row.get("description", "Consult a doctor."),
+                    "side_effects": row.get("side_effects", "Unknown"),
+                    "severity"    : row.get("severity", "unknown"),
                 })
             else:
                 med = self.le_medicine.classes_[self.clf_medicine.predict(vec)[0]]
@@ -79,32 +98,41 @@ class MLService:
                 })
         return results
 
+    # ── CSV fallback path ─────────────────────────────────────────────────
+
     def _predict_csv(self, symptom_input):
         s = symptom_input.lower().strip()
-        r = self.data[self.data["symptoms"].str.lower() == s]
-        if r.empty:
-            r = self.data[self.data["symptoms"].str.lower().str.contains(s, na=False)]
-        if not r.empty:
-            row = r.iloc[0]
-            return [{
-                "disease"     : row["disease"],
-                "confidence"  : 70.0,
-                "medicine"    : row["medicine"],
-                "description" : row["description"],
-                "side_effects": row["side_effects"],
-                "severity"    : row["severity"],
-            }]
+        # exact match first
+        for row in self.data:
+            if row.get("symptoms", "").lower() == s:
+                return [self._row_to_result(row, 70.0)]
+        # partial match
+        for row in self.data:
+            if s in row.get("symptoms", "").lower():
+                return [self._row_to_result(row, 60.0)]
         return []
+
+    def _row_to_result(self, row, confidence):
+        return {
+            "disease"     : row.get("disease", "Unknown"),
+            "confidence"  : confidence,
+            "medicine"    : row.get("medicine", "Unknown"),
+            "description" : row.get("description", "Consult a doctor."),
+            "side_effects": row.get("side_effects", "Unknown"),
+            "severity"    : row.get("severity", "unknown"),
+        }
+
+    # ── Utility ───────────────────────────────────────────────────────────
 
     def get_symptoms(self):
         syms = set()
-        for s in self.data["symptoms"].dropna():
-            for p in s.replace(",", " ").split():
-                syms.add(p.strip().lower())
+        for row in self.data:
+            for part in row.get("symptoms", "").replace(",", " ").split():
+                syms.add(part.strip().lower())
         return sorted(syms)
 
     def get_diseases(self):
-        return sorted(self.data["disease"].unique().tolist())
+        return sorted(set(row.get("disease", "") for row in self.data if row.get("disease")))
 
 
 # Single instance shared across the app
