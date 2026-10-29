@@ -2,10 +2,14 @@ import React from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 import Chatbot from "./Chatbot";
+import ReminderNotifier from "./ReminderNotifier";
 
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F7F4] text-[#4A4D45]">
+      {/* Global Clinical Reminder Alerts & Audio Engine */}
+      <ReminderNotifier />
+
       {/* Kaira Header Navigation */}
       <Header />
 

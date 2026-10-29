@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Clock, Plus, Bell, Check, Trash2, Calendar, FileText, CheckCircle2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Clock, Plus, Bell, Check, Trash2, Calendar, FileText, CheckCircle2, Volume2, Sparkles } from "lucide-react";
+import { NOTIF_EVENT, playReminderChime, getLocalDateString } from "./ReminderNotifier";
 
 const STORAGE_KEY = "mediassist_reminders";
 
@@ -12,7 +13,12 @@ function loadReminders() {
 }
 
 function saveReminders(r) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(r));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(r));
+    window.dispatchEvent(new Event("storage"));
+  } catch (e) {
+    console.error("Failed to save reminders:", e);
+  }
 }
 
 export default function MedicineReminder() {
@@ -21,7 +27,7 @@ export default function MedicineReminder() {
   const [notifPerm, setNotifPerm] = useState(
     typeof Notification !== "undefined" ? Notification.permission : "denied"
   );
-  const [showNotifMsg, setShowNotifMsg] = useState(false);
+  const [testTriggered, setTestTriggered] = useState(false);
 
   // Form state
   const [medName, setMedName] = useState("");
@@ -31,50 +37,72 @@ export default function MedicineReminder() {
   const [times, setTimes] = useState(["08:00"]);
   const [newTime, setNewTime] = useState("09:00");
 
+  // Keep state synchronized with global updates from ReminderNotifier or other tabs
   useEffect(() => {
-    saveReminders(reminders);
-  }, [reminders]);
-
-  useEffect(() => {
-    if (showNotifMsg) {
-      const t = setTimeout(() => setShowNotifMsg(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [showNotifMsg]);
-
-  const checkReminders = useCallback(() => {
-    const now = new Date();
-    const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const today = now.toISOString().split("T")[0];
-    reminders.forEach((r) => {
-      if (!r.active) return;
-      r.times.forEach((t) => {
-        if (t === hhmm) {
-          const key = `${r.id}-${today}-${t}`;
-          if (!localStorage.getItem(key)) {
-            localStorage.setItem(key, "notified");
-            if (notifPerm === "granted") {
-              new Notification("💊 Medicine Reminder", {
-                body: `Time to take ${r.medicine}${r.dosage ? ` (${r.dosage})` : ""}`,
-                icon: "/favicon.ico",
-              });
-            }
-          }
-        }
-      });
-    });
-  }, [reminders, notifPerm]);
-
-  useEffect(() => {
-    const interval = setInterval(checkReminders, 30000);
-    return () => clearInterval(interval);
-  }, [checkReminders]);
+    const handleStorageChange = () => {
+      setReminders(loadReminders());
+      if (typeof Notification !== "undefined") {
+        setNotifPerm(Notification.permission);
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const requestNotification = async () => {
     if (typeof Notification === "undefined") return;
-    const perm = await Notification.requestPermission();
-    setNotifPerm(perm);
-    if (perm === "granted") setShowNotifMsg(true);
+    try {
+      const perm = await Notification.requestPermission();
+      setNotifPerm(perm);
+      return perm;
+    } catch (err) {
+      console.warn("Notification request error:", err);
+      return "denied";
+    }
+  };
+
+  const triggerTestNotification = async () => {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      await requestNotification();
+    }
+
+    // Play clinical audio chime
+    playReminderChime();
+
+    // Trigger in-app alert banner & desktop notification via ReminderNotifier
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const currentTimeStr = `${hh}:${mm}`;
+
+    window.dispatchEvent(
+      new CustomEvent(NOTIF_EVENT, {
+        detail: {
+          reminder: {
+            id: `test-${Date.now()}`,
+            medicine: medName.trim() || "Amoxicillin / Augmentin",
+            dosage: dosage.trim() || "500 mg",
+            notes: "Clinical reminder system test: audio chime, in-app notification banner, and desktop alert active.",
+          },
+          time: currentTimeStr,
+          isTest: true,
+        },
+      })
+    );
+
+    setTestTriggered(true);
+    setTimeout(() => setTestTriggered(false), 4000);
+  };
+
+  const setQuickNextMinute = () => {
+    const d = new Date(Date.now() + 65 * 1000); // 1 minute into the future
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    const nextTime = `${hh}:${mm}`;
+    setNewTime(nextTime);
+    if (!times.includes(nextTime)) {
+      setTimes((prev) => [...prev, nextTime].sort());
+    }
   };
 
   const addTime = () => {
@@ -101,7 +129,11 @@ export default function MedicineReminder() {
       created: new Date().toISOString(),
       taken: {},
     };
-    setReminders((prev) => [...prev, newReminder]);
+    const updated = [...reminders, newReminder];
+    setReminders(updated);
+    saveReminders(updated);
+
+    // Reset form
     setMedName("");
     setDosage("");
     setDuration("7");
@@ -111,30 +143,36 @@ export default function MedicineReminder() {
     setShowForm(false);
   };
 
-  const toggleActive = (id) =>
-    setReminders((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, active: !r.active } : r))
+  const toggleActive = (id) => {
+    const updated = reminders.map((r) =>
+      r.id === id ? { ...r, active: !r.active } : r
     );
+    setReminders(updated);
+    saveReminders(updated);
+  };
 
-  const deleteReminder = (id) =>
-    setReminders((prev) => prev.filter((r) => r.id !== id));
+  const deleteReminder = (id) => {
+    const updated = reminders.filter((r) => r.id !== id);
+    setReminders(updated);
+    saveReminders(updated);
+  };
 
   const markTaken = (id, time) => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalDateString();
     const key = `${today}-${time}`;
-    setReminders((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const taken = { ...r.taken };
-        taken[key] = !taken[key];
-        return { ...r, taken };
-      })
-    );
+    const updated = reminders.map((r) => {
+      if (r.id !== id) return r;
+      const taken = { ...(r.taken || {}) };
+      taken[key] = !taken[key];
+      return { ...r, taken };
+    });
+    setReminders(updated);
+    saveReminders(updated);
   };
 
   const isTaken = (reminder, time) => {
-    const today = new Date().toISOString().split("T")[0];
-    return !!reminder.taken[`${today}-${time}`];
+    const today = getLocalDateString();
+    return !!(reminder.taken && reminder.taken[`${today}-${time}`]);
   };
 
   const getTodayProgress = (reminder) => {
@@ -155,41 +193,89 @@ export default function MedicineReminder() {
               Prescription Schedule & Reminders
             </h3>
             <p className="text-xs text-[#606456] mt-0.5">
-              Keep your treatment protocol strictly on track with automated alerts
+              Keep your treatment protocol strictly on track with multi-channel automated alerts
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="btn-kaira-dark text-xs !py-3 !px-6 flex items-center gap-2 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{showForm ? "Cancel Entry" : "Add Medication Reminder"}</span>
-        </button>
-      </div>
 
-      {/* Notification banner */}
-      {notifPerm === "default" && (
-        <div className="p-4 bg-[#FAF9F6] border border-[#EAE8E2] mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5 text-[#111111]">
-            <Bell className="w-4 h-4 text-[#8C907E]" />
-            <span>Enable browser push notifications to receive timely dose reminders.</span>
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={requestNotification}
-            className="btn-kaira-outline text-[11px] !py-1.5 !px-4"
+            onClick={triggerTestNotification}
+            className="btn-kaira-outline text-xs !py-3 !px-4 flex items-center gap-1.5"
+            title="Test audio chime, banner alert, and desktop notification"
           >
-            Allow Alerts
+            <Volume2 className="w-4 h-4 text-[#8C907E]" />
+            <span>Test Alert & Chime</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowForm(!showForm)}
+            className="btn-kaira-dark text-xs !py-3 !px-6 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{showForm ? "Cancel Entry" : "Add Medication Reminder"}</span>
           </button>
         </div>
-      )}
+      </div>
 
-      {showNotifMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <span>Alerts successfully enabled. You will receive on-time dosage alerts.</span>
+      {/* Notification Engine Status Banner */}
+      <div className="p-4 bg-[#FAF9F6] border border-[#EAE8E2] mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-white border border-[#EAE8E2] flex items-center justify-center text-[#8C907E] flex-shrink-0 mt-0.5 sm:mt-0">
+            <Bell className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-[#111111]">
+                Reminder Engine Status:
+              </span>
+              <span
+                className={`inline-flex items-center px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider ${
+                  notifPerm === "granted"
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                    : notifPerm === "denied"
+                    ? "bg-amber-100 text-amber-800 border border-amber-200"
+                    : "bg-stone-200 text-stone-800 border border-stone-300"
+                }`}
+              >
+                {notifPerm === "granted"
+                  ? "✓ Push, Audio & In-App Alerts Active"
+                  : notifPerm === "denied"
+                  ? "⚠ Desktop Push Blocked (In-App & Audio Active)"
+                  : "Push Permissions Pending"}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#8A8D83] mt-1 leading-relaxed">
+              {notifPerm === "granted"
+                ? "Automatic dosage checking runs continuously across the entire app. System push notifications, synthesized audio chimes, and modal cards will alert you at scheduled dose times."
+                : notifPerm === "denied"
+                ? "Desktop push notifications are blocked in your browser settings. In-app popups and synthesized sound alerts will continue to work. To enable desktop banners, click the lock/settings icon beside your browser address bar and set Notifications to Allow."
+                : "Enable desktop push permissions to receive system notifications even when working in other tabs."}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+          {notifPerm !== "granted" && (
+            <button
+              type="button"
+              onClick={requestNotification}
+              className="btn-kaira-outline text-[11px] !py-2 !px-4"
+            >
+              Enable Browser Push
+            </button>
+          )}
+        </div>
+      </div>
+
+      {testTriggered && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>
+            Test alert triggered! You should hear the 3-tone chime, see the upper-right alert card, and receive a system notification.
+          </span>
         </div>
       )}
 
@@ -208,7 +294,7 @@ export default function MedicineReminder() {
               <input
                 value={medName}
                 onChange={(e) => setMedName(e.target.value)}
-                placeholder="e.g. Amoxicillin, Metformin"
+                placeholder="e.g. Amoxicillin, Metformin, Atorvastatin"
                 className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
               />
             </div>
@@ -246,7 +332,7 @@ export default function MedicineReminder() {
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. Take with warm water after lunch"
+                placeholder="e.g. Take with food or warm water after breakfast"
                 className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
               />
             </div>
@@ -269,6 +355,7 @@ export default function MedicineReminder() {
                       type="button"
                       onClick={() => removeTime(t)}
                       className="text-white/80 hover:text-white"
+                      aria-label={`Remove time ${t}`}
                     >
                       ×
                     </button>
@@ -277,7 +364,7 @@ export default function MedicineReminder() {
               ))}
             </div>
 
-            <div className="flex gap-2 max-w-xs">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 type="time"
                 value={newTime}
@@ -290,6 +377,15 @@ export default function MedicineReminder() {
                 className="btn-kaira-outline text-xs !py-2 !px-4"
               >
                 + Add Time
+              </button>
+              <button
+                type="button"
+                onClick={setQuickNextMinute}
+                className="btn-kaira-outline text-xs !py-2 !px-3 text-[#8C907E] border-[#8C907E] hover:bg-[#8C907E] hover:text-white flex items-center gap-1"
+                title="Sets time to 1 minute from right now so you can verify live notifications"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>+1 Min from Now (Quick Test)</span>
               </button>
             </div>
           </div>
@@ -313,7 +409,7 @@ export default function MedicineReminder() {
           <Clock className="w-10 h-10 mx-auto text-[#D3D7C9] mb-3" />
           <h4 className="font-serif text-lg text-[#111111]">No Medication Schedules Active</h4>
           <p className="text-xs text-[#8A8D83] mt-1 max-w-sm mx-auto">
-            Add your daily prescribed medicines to monitor daily adherence and receive reminder alerts.
+            Add your daily prescribed medicines to monitor daily adherence and receive reminder alerts across any page.
           </p>
         </div>
       ) : (
