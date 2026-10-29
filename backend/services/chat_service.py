@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -18,23 +17,12 @@ Your rules:
 8. Consider user's age when recommending medicines (child vs adult dosage)
 9. Be warm, helpful and professional"""
 
-BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "..", "dataset.csv")
-
 class ChatService:
     def __init__(self):
         self.api_key  = os.environ.get("GROQ_API_KEY")
         self.client   = None
         self.is_ready = False
-        self.data     = None
-        self._load_data()
         self._init_client()
-
-    def _load_data(self):
-        try:
-            self.data = pd.read_csv(DATA_PATH)
-        except:
-            self.data = pd.DataFrame()
 
     def _init_client(self):
         if not self.api_key:
