@@ -22,6 +22,9 @@ def register():
         if not body.get(field, "").strip():
             return jsonify({"error": f"'{field}' is required."}), 400
 
+    if not db_service.is_connected:
+        return jsonify({"error": "Database unavailable. Please try again later."}), 503
+
     email    = body["email"].strip().lower()
     name     = body["name"].strip()
     password = body["password"]

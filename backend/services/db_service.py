@@ -17,7 +17,12 @@ class DBService:
 
     def _connect(self):
         try:
-            self.client       = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
+            self.client       = MongoClient(
+                MONGO_URI,
+                serverSelectionTimeoutMS=8000,
+                connectTimeoutMS=8000,
+                socketTimeoutMS=8000,
+            )
             self.client.server_info()
             self.db           = self.client["mediassist"]
             self.history      = self.db["search_history"]
