@@ -3,22 +3,41 @@ from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 
+import re
+import time
+import urllib.parse
+
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/mediassist")
 
+def sanitize_mongo_uri(uri: str) -> str:
+    """Escapes username and password according to RFC 3986 for pymongo."""
+    if not uri:
+        return uri
+    pattern = r"^(mongodb(?:\+srv)?://)([^:]+):(.*)@([^/?]+)(.*)$"
+    match = re.match(pattern, uri)
+    if match:
+        scheme, user, password, host, rest = match.groups()
+        user_enc = urllib.parse.quote_plus(urllib.parse.unquote_plus(user))
+        pass_enc = urllib.parse.quote_plus(urllib.parse.unquote_plus(password))
+        return f"{scheme}{user_enc}:{pass_enc}@{host}{rest}"
+    return uri
+
 class DBService:
     def __init__(self):
-        self.client       = None
-        self.db           = None
-        self.history      = None
-        self.is_connected = False
+        self.client        = None
+        self.db            = None
+        self.history       = None
+        self.is_connected  = False
+        self._last_attempt = 0
         self._connect()
 
     def _connect(self):
         try:
-            self.client       = MongoClient(
-                MONGO_URI,
+            clean_uri = sanitize_mongo_uri(MONGO_URI)
+            self.client = MongoClient(
+                clean_uri,
                 serverSelectionTimeoutMS=8000,
                 connectTimeoutMS=8000,
                 socketTimeoutMS=8000,
@@ -28,8 +47,24 @@ class DBService:
             self.history      = self.db["search_history"]
             self.is_connected = True
             print("✅ MongoDB connected")
+            return True
         except Exception as e:
+            self.client       = None
+            self.db           = None
+            self.history      = None
+            self.is_connected = False
             print(f"⚠️  MongoDB not connected: {e}")
+            return False
+
+    def ensure_connected(self):
+        if self.is_connected and self.db is not None:
+            return True
+        now = time.time()
+        # Cooldown between reconnect attempts to avoid stalling incoming requests
+        if now - self._last_attempt < 5:
+            return self.is_connected
+        self._last_attempt = now
+        return self._connect()
 
     def save_search(self, symptoms, predictions, method):
         if not self.is_connected:

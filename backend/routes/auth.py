@@ -22,7 +22,7 @@ def register():
         if not body.get(field, "").strip():
             return jsonify({"error": f"'{field}' is required."}), 400
 
-    if not db_service.is_connected:
+    if not db_service.ensure_connected():
         return jsonify({"error": "Database unavailable. Please try again later."}), 503
 
     email    = body["email"].strip().lower()
@@ -71,6 +71,9 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email and password are required."}), 400
 
+    if not db_service.ensure_connected():
+        return jsonify({"error": "Database unavailable. Please try again later."}), 503
+
     user = db_service.db["users"].find_one({"email": email})
     if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
         return jsonify({"error": "Invalid email or password."}), 401
@@ -89,6 +92,8 @@ def login():
 @auth_bp.route("/api/auth/profile", methods=["GET"])
 @jwt_required()
 def get_profile():
+    if not db_service.ensure_connected():
+        return jsonify({"error": "Database unavailable. Please try again later."}), 503
     from bson import ObjectId
     user_id = get_jwt_identity()
     user    = db_service.db["users"].find_one({"_id": ObjectId(user_id)})
@@ -111,6 +116,8 @@ def get_profile():
 @auth_bp.route("/api/auth/profile", methods=["PUT"])
 @jwt_required()
 def update_profile():
+    if not db_service.ensure_connected():
+        return jsonify({"error": "Database unavailable. Please try again later."}), 503
     from bson import ObjectId
     user_id = get_jwt_identity()
     body    = request.get_json(silent=True)
@@ -134,6 +141,9 @@ def forgot_password():
 
     if not email:
         return jsonify({"error": "Email is required."}), 400
+
+    if not db_service.ensure_connected():
+        return jsonify({"error": "Database unavailable. Please try again later."}), 503
 
     user = db_service.db["users"].find_one({"email": email})
 
@@ -162,6 +172,9 @@ def reset_password():
 
     if len(password) < 6:
         return jsonify({"error": "Password must be at least 6 characters."}), 400
+
+    if not db_service.ensure_connected():
+        return jsonify({"error": "Database unavailable. Please try again later."}), 503
 
     email = verify_reset_token(token)
     if not email:
