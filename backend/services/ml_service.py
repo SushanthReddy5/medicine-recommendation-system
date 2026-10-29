@@ -63,8 +63,13 @@ class MLService:
 
     def predict(self, symptom_input, top_n=3):
         if self.is_loaded:
-            return self._predict_ml(symptom_input, top_n)
-        return self._predict_csv(symptom_input)
+            try:
+                results = self._predict_ml(symptom_input, top_n)
+                if results:
+                    return results
+            except Exception as e:
+                print(f"⚠️  ML prediction error: {e} — falling back to CSV matching")
+        return self._predict_csv(symptom_input, top_n)
 
     # ── ML path ───────────────────────────────────────────────────────────
 
@@ -74,20 +79,21 @@ class MLService:
         top   = np.argsort(proba)[::-1][:top_n]
         results = []
         for idx in top:
-            disease    = self.le_disease.classes_[idx]
+            disease    = str(self.le_disease.classes_[idx])
             confidence = round(float(proba[idx]) * 100, 1)
             row        = self.disease_map.get(disease)
             if row:
                 results.append({
                     "disease"     : disease,
                     "confidence"  : confidence,
-                    "medicine"    : row.get("medicine", "Unknown"),
-                    "description" : row.get("description", "Consult a doctor."),
-                    "side_effects": row.get("side_effects", "Unknown"),
-                    "severity"    : row.get("severity", "unknown"),
+                    "medicine"    : str(row.get("medicine", "Unknown")),
+                    "description" : str(row.get("description", "Consult a doctor.")),
+                    "side_effects": str(row.get("side_effects", "Unknown")),
+                    "severity"    : str(row.get("severity", "unknown")),
                 })
             else:
-                med = self.le_medicine.classes_[self.clf_medicine.predict(vec)[0]]
+                med_idx = self.clf_medicine.predict(vec)[0]
+                med     = str(self.le_medicine.classes_[med_idx])
                 results.append({
                     "disease"     : disease,
                     "confidence"  : confidence,
@@ -100,26 +106,55 @@ class MLService:
 
     # ── CSV fallback path ─────────────────────────────────────────────────
 
-    def _predict_csv(self, symptom_input):
+    def _predict_csv(self, symptom_input, top_n=3):
+        if not self.data:
+            return []
+
         s = symptom_input.lower().strip()
-        # exact match first
+        tokens = set(x.strip() for x in s.replace(",", " ").split() if len(x.strip()) > 1)
+
+        # 1. Exact match
         for row in self.data:
-            if row.get("symptoms", "").lower() == s:
+            if row.get("symptoms", "").lower().strip() == s:
                 return [self._row_to_result(row, 70.0)]
-        # partial match
+
+        # 2. Token overlap scoring
+        scored = []
+        for row in self.data:
+            row_syms = set(x.strip() for x in row.get("symptoms", "").lower().replace(",", " ").split())
+            overlap = len(tokens.intersection(row_syms))
+            if overlap > 0:
+                conf = round(min(85.0, 40.0 + (overlap / max(1, len(tokens))) * 45.0), 1)
+                scored.append((overlap, conf, row))
+
+        if scored:
+            scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+            results = []
+            seen_diseases = set()
+            for _, conf, row in scored:
+                d = str(row.get("disease", "Unknown"))
+                if d not in seen_diseases:
+                    seen_diseases.add(d)
+                    results.append(self._row_to_result(row, conf))
+                if len(results) >= top_n:
+                    break
+            return results
+
+        # 3. Substring match fallback
         for row in self.data:
             if s in row.get("symptoms", "").lower():
                 return [self._row_to_result(row, 60.0)]
+
         return []
 
     def _row_to_result(self, row, confidence):
         return {
-            "disease"     : row.get("disease", "Unknown"),
-            "confidence"  : confidence,
-            "medicine"    : row.get("medicine", "Unknown"),
-            "description" : row.get("description", "Consult a doctor."),
-            "side_effects": row.get("side_effects", "Unknown"),
-            "severity"    : row.get("severity", "unknown"),
+            "disease"     : str(row.get("disease", "Unknown")),
+            "confidence"  : float(confidence),
+            "medicine"    : str(row.get("medicine", "Unknown")),
+            "description" : str(row.get("description", "Consult a doctor.")),
+            "side_effects": str(row.get("side_effects", "Unknown")),
+            "severity"    : str(row.get("severity", "unknown")),
         }
 
     # ── Utility ───────────────────────────────────────────────────────────

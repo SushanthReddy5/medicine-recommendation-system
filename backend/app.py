@@ -44,7 +44,11 @@ def create_app(env="development"):
 
     @app.errorhandler(500)
     def server_error(e):
-        return jsonify({"error": "Internal server error."}), 500
+        import traceback
+        traceback.print_exc()
+        orig = getattr(e, "original_exception", e)
+        msg  = str(orig) if orig and str(orig) != "500 Internal Server Error" else "Internal server error. Please check server logs."
+        return jsonify({"error": msg}), 500
 
     return app
 

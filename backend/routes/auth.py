@@ -14,78 +14,87 @@ auth_bp = Blueprint("auth", __name__)
 # ── Register ──────────────────────────────────────────────────────────────────
 @auth_bp.route("/api/auth/register", methods=["POST"])
 def register():
-    body = request.get_json(silent=True)
-    if not body:
-        return jsonify({"error": "Request body is empty."}), 400
+    try:
+        body = request.get_json(silent=True)
+        if not body:
+            return jsonify({"error": "Request body is empty."}), 400
 
-    for field in ["name", "email", "password"]:
-        if not body.get(field, "").strip():
-            return jsonify({"error": f"'{field}' is required."}), 400
+        for field in ["name", "email", "password"]:
+            if not body.get(field, "").strip():
+                return jsonify({"error": f"'{field}' is required."}), 400
 
-    if not db_service.ensure_connected():
-        return jsonify({"error": "Database unavailable. Please try again later."}), 503
+        if not db_service.ensure_connected():
+            return jsonify({"error": "Database unavailable. Please try again later."}), 503
 
-    email    = body["email"].strip().lower()
-    name     = body["name"].strip()
-    password = body["password"]
+        email    = body["email"].strip().lower()
+        name     = body["name"].strip()
+        password = body["password"]
 
-    if len(password) < 6:
-        return jsonify({"error": "Password must be at least 6 characters."}), 400
+        if len(password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters."}), 400
 
-    if db_service.db["users"].find_one({"email": email}):
-        return jsonify({"error": "Email already registered."}), 409
+        if db_service.db["users"].find_one({"email": email}):
+            return jsonify({"error": "Email already registered."}), 409
 
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    user   = {
-        "name"            : name,
-        "email"           : email,
-        "password"        : hashed,
-        "age"             : body.get("age", ""),
-        "gender"          : body.get("gender", ""),
-        "blood_group"     : body.get("blood_group", ""),
-        "allergies"       : body.get("allergies", ""),
-        "phone"           : body.get("phone", ""),
-        "emergency_contact": body.get("emergency_contact", ""),
-    }
-    result = db_service.db["users"].insert_one(user)
-    token  = create_access_token(
-        identity=str(result.inserted_id),
-        expires_delta=timedelta(days=7)
-    )
-    return jsonify({
-        "token": token,
-        "user" : {"id": str(result.inserted_id), "name": name, "email": email}
-    }), 201
+        hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        user   = {
+            "name"            : name,
+            "email"           : email,
+            "password"        : hashed,
+            "age"             : body.get("age", ""),
+            "gender"          : body.get("gender", ""),
+            "blood_group"     : body.get("blood_group", ""),
+            "allergies"       : body.get("allergies", ""),
+            "phone"           : body.get("phone", ""),
+            "emergency_contact": body.get("emergency_contact", ""),
+        }
+        result = db_service.db["users"].insert_one(user)
+        token  = create_access_token(
+            identity=str(result.inserted_id),
+            expires_delta=timedelta(days=7)
+        )
+        return jsonify({
+            "token": token,
+            "user" : {"id": str(result.inserted_id), "name": name, "email": email}
+        }), 201
+    except Exception as e:
+        print(f"⚠️ Registration error: {e}")
+        return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
 
 # ── Login ─────────────────────────────────────────────────────────────────────
 @auth_bp.route("/api/auth/login", methods=["POST"])
 def login():
-    body = request.get_json(silent=True)
-    if not body:
-        return jsonify({"error": "Request body is empty."}), 400
+    try:
+        body = request.get_json(silent=True)
+        if not body:
+            return jsonify({"error": "Request body is empty."}), 400
 
-    email    = body.get("email", "").strip().lower()
-    password = body.get("password", "")
+        email    = body.get("email", "").strip().lower()
+        password = body.get("password", "")
 
-    if not email or not password:
-        return jsonify({"error": "Email and password are required."}), 400
+        if not email or not password:
+            return jsonify({"error": "Email and password are required."}), 400
 
-    if not db_service.ensure_connected():
-        return jsonify({"error": "Database unavailable. Please try again later."}), 503
+        if not db_service.ensure_connected():
+            return jsonify({"error": "Database unavailable. Please try again later."}), 503
 
-    user = db_service.db["users"].find_one({"email": email})
-    if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
-        return jsonify({"error": "Invalid email or password."}), 401
+        user = db_service.db["users"].find_one({"email": email})
+        if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+            return jsonify({"error": "Invalid email or password."}), 401
 
-    token = create_access_token(
-        identity=str(user["_id"]),
-        expires_delta=timedelta(days=7)
-    )
-    return jsonify({
-        "token": token,
-        "user" : {"id": str(user["_id"]), "name": user["name"], "email": user["email"]}
-    })
+        token = create_access_token(
+            identity=str(user["_id"]),
+            expires_delta=timedelta(days=7)
+        )
+        return jsonify({
+            "token": token,
+            "user" : {"id": str(user["_id"]), "name": user["name"], "email": user["email"]}
+        })
+    except Exception as e:
+        print(f"⚠️ Login error: {e}")
+        return jsonify({"error": f"Login failed: {str(e)}"}), 500
+
 
 
 # ── Get Profile ───────────────────────────────────────────────────────────────
