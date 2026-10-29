@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Clock, Plus, Bell, Check, Trash2, Calendar, FileText, CheckCircle2, Volume2, Sparkles } from "lucide-react";
+import {
+  Clock,
+  Plus,
+  Check,
+  Trash2,
+  Calendar,
+  FileText,
+  CheckCircle2,
+  Volume2,
+  Smartphone,
+  ExternalLink,
+  Info,
+} from "lucide-react";
 import { NOTIF_EVENT, playReminderChime, getLocalDateString } from "./ReminderNotifier";
+import { downloadIcsFile, openGoogleCalendar } from "../utils/calendarSync";
 
 const STORAGE_KEY = "mediassist_reminders";
 
@@ -28,14 +41,16 @@ export default function MedicineReminder() {
     typeof Notification !== "undefined" ? Notification.permission : "denied"
   );
   const [testTriggered, setTestTriggered] = useState(false);
+  const [justSavedMed, setJustSavedMed] = useState(null);
+  const [downloadFeedback, setDownloadFeedback] = useState(null);
 
-  // Form state
+  // Form state - Start with empty times (no predefined 08:00)
   const [medName, setMedName] = useState("");
   const [dosage, setDosage] = useState("");
   const [duration, setDuration] = useState("7");
   const [notes, setNotes] = useState("");
-  const [times, setTimes] = useState(["08:00"]);
-  const [newTime, setNewTime] = useState("09:00");
+  const [times, setTimes] = useState([]);
+  const [newTime, setNewTime] = useState("");
 
   // Keep state synchronized with global updates from ReminderNotifier or other tabs
   useEffect(() => {
@@ -94,25 +109,14 @@ export default function MedicineReminder() {
     setTimeout(() => setTestTriggered(false), 4000);
   };
 
-  const setQuickNextMinute = () => {
-    const d = new Date(Date.now() + 65 * 1000); // 1 minute into the future
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    const nextTime = `${hh}:${mm}`;
-    setNewTime(nextTime);
-    if (!times.includes(nextTime)) {
-      setTimes((prev) => [...prev, nextTime].sort());
-    }
-  };
-
   const addTime = () => {
     if (!newTime) return;
     if (times.includes(newTime)) return;
     setTimes((prev) => [...prev, newTime].sort());
+    setNewTime("");
   };
 
   const removeTime = (t) => {
-    if (times.length === 1) return;
     setTimes((prev) => prev.filter((x) => x !== t));
   };
 
@@ -123,7 +127,7 @@ export default function MedicineReminder() {
       medicine: medName.trim(),
       dosage: dosage.trim(),
       times: [...times].sort(),
-      duration: parseInt(duration) || 7,
+      duration: parseInt(duration, 10) || 7,
       notes: notes.trim(),
       active: true,
       created: new Date().toISOString(),
@@ -133,13 +137,16 @@ export default function MedicineReminder() {
     setReminders(updated);
     saveReminders(updated);
 
-    // Reset form
+    // Offer immediate device calendar sync
+    setJustSavedMed(newReminder);
+
+    // Reset form to clean empty state
     setMedName("");
     setDosage("");
     setDuration("7");
     setNotes("");
-    setTimes(["08:00"]);
-    setNewTime("09:00");
+    setTimes([]);
+    setNewTime("");
     setShowForm(false);
   };
 
@@ -211,7 +218,13 @@ export default function MedicineReminder() {
 
           <button
             type="button"
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setShowForm(!showForm);
+              if (!showForm) {
+                setTimes([]);
+                setNewTime("");
+              }
+            }}
             className="btn-kaira-dark text-xs !py-3 !px-6 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -220,44 +233,28 @@ export default function MedicineReminder() {
         </div>
       </div>
 
-      {/* Notification Engine Status Banner */}
-      <div className="p-4 bg-[#FAF9F6] border border-[#EAE8E2] mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-white border border-[#EAE8E2] flex items-center justify-center text-[#8C907E] flex-shrink-0 mt-0.5 sm:mt-0">
-            <Bell className="w-4 h-4" />
+      {/* Offline & Closed Browser Notification Guidance Banner */}
+      <div className="p-4 bg-[#FAF9F6] border border-[#EAE8E2] mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-white border border-[#EAE8E2] flex items-center justify-center text-[#8C907E] flex-shrink-0 mt-0.5">
+            <Smartphone className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-[#111111]">
-                Reminder Engine Status:
+                Regular Notifications Even When Browser Is Closed:
               </span>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider ${
-                  notifPerm === "granted"
-                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                    : notifPerm === "denied"
-                    ? "bg-amber-100 text-amber-800 border border-amber-200"
-                    : "bg-stone-200 text-stone-800 border border-stone-300"
-                }`}
-              >
-                {notifPerm === "granted"
-                  ? "✓ Push, Audio & In-App Alerts Active"
-                  : notifPerm === "denied"
-                  ? "⚠ Desktop Push Blocked (In-App & Audio Active)"
-                  : "Push Permissions Pending"}
+              <span className="inline-flex items-center px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-[#8C907E] text-white">
+                Device Calendar Sync Ready
               </span>
             </div>
             <p className="text-[11px] text-[#8A8D83] mt-1 leading-relaxed">
-              {notifPerm === "granted"
-                ? "Automatic dosage checking runs continuously across the entire app. System push notifications, synthesized audio chimes, and modal cards will alert you at scheduled dose times."
-                : notifPerm === "denied"
-                ? "Desktop push notifications are blocked in your browser settings. In-app popups and synthesized sound alerts will continue to work. To enable desktop banners, click the lock/settings icon beside your browser address bar and set Notifications to Allow."
-                : "Enable desktop push permissions to receive system notifications even when working in other tabs."}
+              When Chrome is completely quit, web pages cannot run in-memory code. To receive guaranteed native system alarms and notifications on your Mac, iPhone, Android, or PC when Chrome is closed, click <strong>"Sync to Device Calendar (.ics)"</strong> on any medication below. Your native Calendar will ring alarms at your scheduled times automatically.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+        <div className="flex items-center gap-2 flex-shrink-0 self-end md:self-auto">
           {notifPerm !== "granted" && (
             <button
               type="button"
@@ -270,6 +267,57 @@ export default function MedicineReminder() {
         </div>
       </div>
 
+      {/* Just-Saved Medication Sync Prompt */}
+      {justSavedMed && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs mb-6 rounded-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div>
+              <span className="font-semibold text-[#111111]">
+                Saved schedule for {justSavedMed.medicine}!
+              </span>
+              <p className="text-[11px] text-[#606456] mt-0.5">
+                Sync to your device calendar now so your system alarms alert you even when Chrome is closed:
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                downloadIcsFile(justSavedMed);
+                setDownloadFeedback(justSavedMed.medicine);
+                setJustSavedMed(null);
+                setTimeout(() => setDownloadFeedback(null), 4000);
+              }}
+              className="btn-kaira-dark text-[11px] !py-2 !px-4 flex items-center gap-1.5"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-white" />
+              <span>Download Device Alarms (.ics)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setJustSavedMed(null)}
+              className="px-2 py-1.5 text-xs text-[#8A8D83] hover:text-[#111111]"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Download Feedback Banner */}
+      {downloadFeedback && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>
+            Calendar schedule for <strong>{downloadFeedback}</strong> downloaded! Click the downloaded file to add daily alarms to Apple Calendar, Outlook, or Windows Calendar.
+          </span>
+        </div>
+      )}
+
+      {/* Test Triggered Banner */}
       {testTriggered && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
@@ -338,31 +386,36 @@ export default function MedicineReminder() {
             </div>
           </div>
 
-          {/* Time Slots */}
+          {/* Time Slots - No predefined time */}
           <div>
             <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5">
               Scheduled Daily Dose Times *
             </label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {times.map((t) => (
-                <span
-                  key={t}
-                  className="inline-flex items-center gap-1.5 bg-[#8C907E] text-white text-xs uppercase tracking-wider px-3 py-1.5"
-                >
-                  <span>{t}</span>
-                  {times.length > 1 && (
+
+            {times.length === 0 ? (
+              <p className="text-xs text-[#8A8D83] italic mb-3">
+                No dose times added yet. Select a time below and click "+ Add Time".
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {times.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1.5 bg-[#8C907E] text-white text-xs uppercase tracking-wider px-3 py-1.5"
+                  >
+                    <span>{t}</span>
                     <button
                       type="button"
                       onClick={() => removeTime(t)}
-                      className="text-white/80 hover:text-white"
+                      className="text-white/80 hover:text-white ml-1 font-bold"
                       aria-label={`Remove time ${t}`}
                     >
                       ×
                     </button>
-                  )}
-                </span>
-              ))}
-            </div>
+                  </span>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-2">
               <input
@@ -374,18 +427,10 @@ export default function MedicineReminder() {
               <button
                 type="button"
                 onClick={addTime}
-                className="btn-kaira-outline text-xs !py-2 !px-4"
+                disabled={!newTime}
+                className="btn-kaira-outline text-xs !py-2 !px-4 disabled:opacity-40"
               >
                 + Add Time
-              </button>
-              <button
-                type="button"
-                onClick={setQuickNextMinute}
-                className="btn-kaira-outline text-xs !py-2 !px-3 text-[#8C907E] border-[#8C907E] hover:bg-[#8C907E] hover:text-white flex items-center gap-1"
-                title="Sets time to 1 minute from right now so you can verify live notifications"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>+1 Min from Now (Quick Test)</span>
               </button>
             </div>
           </div>
@@ -395,7 +440,7 @@ export default function MedicineReminder() {
               type="button"
               onClick={addReminder}
               disabled={!medName.trim() || times.length === 0}
-              className="btn-kaira-dark text-xs !py-3 !px-8"
+              className="btn-kaira-dark text-xs !py-3 !px-8 disabled:opacity-40"
             >
               Save Schedule Reminder
             </button>
@@ -409,7 +454,7 @@ export default function MedicineReminder() {
           <Clock className="w-10 h-10 mx-auto text-[#D3D7C9] mb-3" />
           <h4 className="font-serif text-lg text-[#111111]">No Medication Schedules Active</h4>
           <p className="text-xs text-[#8A8D83] mt-1 max-w-sm mx-auto">
-            Add your daily prescribed medicines to monitor daily adherence and receive reminder alerts across any page.
+            Add your daily prescribed medicines to monitor daily adherence and sync alarms to your device calendar.
           </p>
         </div>
       ) : (
@@ -489,7 +534,7 @@ export default function MedicineReminder() {
                 </div>
 
                 {/* Dose time pills */}
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F1F1F0]">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F1F1F0] mb-4">
                   {reminder.times.map((time) => {
                     const taken = isTaken(reminder, time);
                     return (
@@ -509,6 +554,41 @@ export default function MedicineReminder() {
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Closed Browser / Device Calendar Sync Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#F1F1F0] bg-[#FAF9F6] -mx-6 -mb-6 px-6 py-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        downloadIcsFile(reminder);
+                        setDownloadFeedback(reminder.medicine);
+                        setTimeout(() => setDownloadFeedback(null), 4000);
+                      }}
+                      className="btn-kaira-outline text-[11px] !py-1.5 !px-3 flex items-center gap-1.5 text-[#111111] hover:border-[#111111] bg-white"
+                      title="Sync to Apple Calendar, Outlook, or Windows Calendar so alarms ring when Chrome is closed"
+                    >
+                      <Smartphone className="w-3.5 h-3.5 text-[#8C907E]" />
+                      <span>Sync to Device Calendar (.ics)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => openGoogleCalendar(reminder, reminder.times[0] || "08:00")}
+                      className="btn-kaira-outline text-[11px] !py-1.5 !px-3 flex items-center gap-1.5 text-[#606456] bg-white"
+                      title="Add daily recurring schedule to Google Calendar"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-[#8C907E]" />
+                      <span>Google Calendar</span>
+                      <ExternalLink className="w-3 h-3 text-[#8A8D83]" />
+                    </button>
+                  </div>
+
+                  <span className="text-[10px] text-[#8A8D83] uppercase tracking-wider font-medium flex items-center gap-1">
+                    <Info className="w-3 h-3 text-[#8C907E]" />
+                    <span>Rings OS alarms even with browser closed</span>
+                  </span>
                 </div>
               </div>
             );

@@ -92,13 +92,28 @@ export default function ReminderNotifier() {
             badge: "/favicon.ico",
             tag: `reminder-${reminder.id}-${time}`,
             requireInteraction: true,
+            data: { url: "/reminders" },
           };
 
-          const notification = new Notification(title, options);
-          notification.onclick = () => {
-            window.focus();
-            notification.close();
-          };
+          if ("serviceWorker" in navigator && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready
+              .then((reg) => {
+                if (reg && reg.showNotification) {
+                  reg.showNotification(title, options);
+                } else {
+                  new Notification(title, options);
+                }
+              })
+              .catch(() => {
+                new Notification(title, options);
+              });
+          } else {
+            const notification = new Notification(title, options);
+            notification.onclick = () => {
+              window.focus();
+              notification.close();
+            };
+          }
         } catch (err) {
           console.warn("System desktop notification error:", err);
         }

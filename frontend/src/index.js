@@ -10,7 +10,16 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-
+// Register MediAssist Service Worker for system notifications & background handling
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        console.log('MediAssist Service Worker registered:', reg.scope);
+      })
+      .catch((err) => {
+        console.warn('MediAssist Service Worker registration failed:', err);
+      });
+  });
+}
