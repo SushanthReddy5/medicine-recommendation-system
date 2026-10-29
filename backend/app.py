@@ -15,7 +15,7 @@ def create_app(env="development"):
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET", "mediassist-secret-key-2025")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 
-    CORS(app)
+    CORS(app, origins="*", supports_credentials=False)
     JWTManager(app)
 
     app.register_blueprint(predict_bp)
