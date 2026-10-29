@@ -64,23 +64,39 @@ class ChatService:
     def chat(self, messages, user_profile=None):
         if not self.is_ready:
             return "Chatbot is not available. Please add GROQ_API_KEY to .env"
-        try:
-            system_prompt = self._build_system_prompt(user_profile)
-            groq_messages = [{"role": "system", "content": system_prompt}]
-            for m in messages:
-                groq_messages.append({
-                    "role"   : m["role"],
-                    "content": m["content"]
-                })
-            response = self.client.chat.completions.create(
-                model      = "llama-3.1-8b-instant",
-                messages   = groq_messages,
-                max_tokens = 400,
-                temperature= 0.7,
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"❌ Chat error: {e}")
-            return f"Sorry, I encountered an error: {str(e)}"
+
+        system_prompt = self._build_system_prompt(user_profile)
+        groq_messages = [{"role": "system", "content": system_prompt}]
+        for m in messages:
+            groq_messages.append({
+                "role"   : m["role"],
+                "content": m["content"]
+            })
+
+        # Try active Groq models in order of performance
+        candidate_models = [
+            "qwen/qwen3.8-27b",
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+        ]
+
+        last_error = None
+        for model_name in candidate_models:
+            try:
+                response = self.client.chat.completions.create(
+                    model      = model_name,
+                    messages   = groq_messages,
+                    max_tokens = 400,
+                    temperature= 0.7,
+                )
+                reply = response.choices[0].message.content
+                if reply and reply.strip():
+                    return reply.strip()
+            except Exception as e:
+                last_error = e
+                print(f"⚠️ Groq model '{model_name}' failed: {e}")
+
+        return f"Sorry, I encountered an error: {str(last_error) if last_error else 'Unknown error'}"
+
 
 chat_service = ChatService()
