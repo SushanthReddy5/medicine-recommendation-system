@@ -24,11 +24,11 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-4">
               <a
-                href="tel:911"
+                href="tel:108"
                 className="btn-kaira-dark text-xs !py-2.5 !px-5 flex items-center gap-2"
               >
                 <PhoneCall className="w-4 h-4" />
-                <span>Call Emergency (911 / 112)</span>
+                <span>Call Emergency (108)</span>
               </a>
               <Link
                 to="/hospitals"
