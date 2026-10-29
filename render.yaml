@@ -5,7 +5,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    startCommand: gunicorn app:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: FLASK_ENV
         value: production
@@ -14,7 +14,7 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: JWT_SECRET
-        generateValue: true
+        value: mediassist-secret-key-2025
       - key: GMAIL_USER
         sync: false
       - key: GMAIL_APP_PASSWORD
@@ -23,10 +23,9 @@ services:
         sync: false
     healthCheckPath: /api/health
 
-  # ── Frontend (React) ───────────────────────────────────────────────────
-  - type: web
+  # ── Frontend (React Static Site) ──────────────────────────────────────
+  - type: static
     name: mediassist-frontend
-    runtime: node
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: build

@@ -56,3 +56,7 @@ if __name__ == "__main__":
         port =app.config["PORT"],
         debug=app.config["DEBUG"],
     )
+
+# Module-level app for gunicorn (gunicorn app:application)
+_env = os.environ.get("FLASK_ENV", "production")
+application = create_app(_env)
