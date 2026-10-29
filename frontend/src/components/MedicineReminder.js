@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Clock, Plus, Bell, Check, Trash2, Calendar, FileText, CheckCircle2 } from "lucide-react";
 
 const STORAGE_KEY = "mediassist_reminders";
 
 function loadReminders() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
 }
 
 function saveReminders(r) {
@@ -12,24 +16,25 @@ function saveReminders(r) {
 }
 
 export default function MedicineReminder() {
-  const [reminders, setReminders]     = useState(loadReminders);
-  const [showForm, setShowForm]       = useState(false);
-  const [notifPerm, setNotifPerm]     = useState(
+  const [reminders, setReminders] = useState(loadReminders);
+  const [showForm, setShowForm] = useState(false);
+  const [notifPerm, setNotifPerm] = useState(
     typeof Notification !== "undefined" ? Notification.permission : "denied"
   );
   const [showNotifMsg, setShowNotifMsg] = useState(false);
 
   // Form state
-  const [medName, setMedName]   = useState("");
-  const [dosage, setDosage]     = useState("");
+  const [medName, setMedName] = useState("");
+  const [dosage, setDosage] = useState("");
   const [duration, setDuration] = useState("7");
-  const [notes, setNotes]       = useState("");
-  const [times, setTimes]       = useState(["08:00"]);
-  const [newTime, setNewTime]   = useState("09:00");
+  const [notes, setNotes] = useState("");
+  const [times, setTimes] = useState(["08:00"]);
+  const [newTime, setNewTime] = useState("09:00");
 
-  useEffect(() => { saveReminders(reminders); }, [reminders]);
+  useEffect(() => {
+    saveReminders(reminders);
+  }, [reminders]);
 
-  // Hide notification success message after 3 seconds
   useEffect(() => {
     if (showNotifMsg) {
       const t = setTimeout(() => setShowNotifMsg(false), 3000);
@@ -38,12 +43,12 @@ export default function MedicineReminder() {
   }, [showNotifMsg]);
 
   const checkReminders = useCallback(() => {
-    const now   = new Date();
-    const hhmm  = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    const now = new Date();
+    const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     const today = now.toISOString().split("T")[0];
-    reminders.forEach(r => {
+    reminders.forEach((r) => {
       if (!r.active) return;
-      r.times.forEach(t => {
+      r.times.forEach((t) => {
         if (t === hhmm) {
           const key = `${r.id}-${today}-${t}`;
           if (!localStorage.getItem(key)) {
@@ -72,51 +77,59 @@ export default function MedicineReminder() {
     if (perm === "granted") setShowNotifMsg(true);
   };
 
-  // Add a time slot
   const addTime = () => {
     if (!newTime) return;
     if (times.includes(newTime)) return;
-    setTimes(prev => [...prev, newTime].sort());
+    setTimes((prev) => [...prev, newTime].sort());
   };
 
-  // Remove a time slot
   const removeTime = (t) => {
-    if (times.length === 1) return; // keep at least one
-    setTimes(prev => prev.filter(x => x !== t));
+    if (times.length === 1) return;
+    setTimes((prev) => prev.filter((x) => x !== t));
   };
 
   const addReminder = () => {
     if (!medName.trim() || times.length === 0) return;
     const newReminder = {
-      id      : Date.now(),
+      id: Date.now(),
       medicine: medName.trim(),
-      dosage  : dosage.trim(),
-      times   : [...times].sort(),
+      dosage: dosage.trim(),
+      times: [...times].sort(),
       duration: parseInt(duration) || 7,
-      notes   : notes.trim(),
-      active  : true,
-      created : new Date().toISOString(),
-      taken   : {},
+      notes: notes.trim(),
+      active: true,
+      created: new Date().toISOString(),
+      taken: {},
     };
-    setReminders(prev => [...prev, newReminder]);
-    // Reset form
-    setMedName(""); setDosage(""); setDuration("7");
-    setNotes(""); setTimes(["08:00"]); setNewTime("09:00");
+    setReminders((prev) => [...prev, newReminder]);
+    setMedName("");
+    setDosage("");
+    setDuration("7");
+    setNotes("");
+    setTimes(["08:00"]);
+    setNewTime("09:00");
     setShowForm(false);
   };
 
-  const toggleActive   = (id) => setReminders(prev => prev.map(r => r.id === id ? { ...r, active: !r.active } : r));
-  const deleteReminder = (id) => setReminders(prev => prev.filter(r => r.id !== id));
+  const toggleActive = (id) =>
+    setReminders((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, active: !r.active } : r))
+    );
+
+  const deleteReminder = (id) =>
+    setReminders((prev) => prev.filter((r) => r.id !== id));
 
   const markTaken = (id, time) => {
     const today = new Date().toISOString().split("T")[0];
-    const key   = `${today}-${time}`;
-    setReminders(prev => prev.map(r => {
-      if (r.id !== id) return r;
-      const taken = { ...r.taken };
-      taken[key]  = !taken[key];
-      return { ...r, taken };
-    }));
+    const key = `${today}-${time}`;
+    setReminders((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        const taken = { ...r.taken };
+        taken[key] = !taken[key];
+        return { ...r, taken };
+      })
+    );
   };
 
   const isTaken = (reminder, time) => {
@@ -125,226 +138,278 @@ export default function MedicineReminder() {
   };
 
   const getTodayProgress = (reminder) => {
-    const taken = reminder.times.filter(t => isTaken(reminder, t)).length;
+    const taken = reminder.times.filter((t) => isTaken(reminder, t)).length;
     return { taken, total: reminder.times.length };
   };
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-
+    <div className="kaira-card bg-white border border-[#EAE8E2] p-6 sm:p-10 shadow-kaira">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">⏰</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-[#F1F1F0] gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[#FAF9F6] border border-[#EAE8E2] flex items-center justify-center text-[#8C907E]">
+            <Clock className="w-6 h-6" />
+          </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Medicine Reminders</h2>
-            <p className="text-xs text-slate-400">Track your daily medication schedule</p>
+            <h3 className="font-serif text-2xl text-[#111111] font-normal">
+              Prescription Schedule & Reminders
+            </h3>
+            <p className="text-xs text-[#606456] mt-0.5">
+              Keep your treatment protocol strictly on track with automated alerts
+            </p>
           </div>
         </div>
-        <button onClick={() => setShowForm(!showForm)}
-                className="bg-blue-600 hover:bg-blue-500 text-white text-sm
-                           font-bold px-4 py-2 rounded-xl transition-colors">
-          {showForm ? "Cancel" : "+ Add Reminder"}
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="btn-kaira-dark text-xs !py-3 !px-6 flex items-center gap-2 self-start sm:self-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>{showForm ? "Cancel Entry" : "Add Medication Reminder"}</span>
         </button>
       </div>
 
-      {/* Notification permission — only show if not yet decided */}
+      {/* Notification banner */}
       {notifPerm === "default" && (
-        <div className="bg-blue-900/30 border border-blue-700 rounded-xl
-                        p-3 mb-4 flex items-center justify-between">
-          <p className="text-blue-300 text-sm">
-            🔔 Enable notifications to get medicine reminders
-          </p>
-          <button onClick={requestNotification}
-                  className="bg-blue-600 hover:bg-blue-500 text-white
-                             text-xs px-3 py-1.5 rounded-lg font-bold">
-            Enable
+        <div className="p-4 bg-[#FAF9F6] border border-[#EAE8E2] mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-[#111111]">
+            <Bell className="w-4 h-4 text-[#8C907E]" />
+            <span>Enable browser push notifications to receive timely dose reminders.</span>
+          </div>
+          <button
+            type="button"
+            onClick={requestNotification}
+            className="btn-kaira-outline text-[11px] !py-1.5 !px-4"
+          >
+            Allow Alerts
           </button>
         </div>
       )}
 
-      {/* Success message — disappears after 3 seconds */}
       {showNotifMsg && (
-        <div className="bg-green-900/20 border border-green-800 rounded-xl
-                        p-3 mb-4 text-green-400 text-sm flex items-center gap-2">
-          <span>✅</span> Notifications enabled — you'll be reminded on time!
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <span>Alerts successfully enabled. You will receive on-time dosage alerts.</span>
         </div>
       )}
 
       {/* Add reminder form */}
       {showForm && (
-        <div className="bg-slate-900/60 border border-slate-600 rounded-xl p-4 mb-5">
-          <h3 className="text-white font-semibold mb-4">New Reminder</h3>
+        <div className="bg-[#FAF9F6] border border-[#EAE8E2] p-6 mb-8 space-y-4">
+          <h4 className="font-serif text-lg text-[#111111] border-b border-[#EAE8E2] pb-3">
+            New Medication Schedule
+          </h4>
 
-          {/* Medicine + Dosage */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Medicine Name *</label>
-              <input value={medName} onChange={e => setMedName(e.target.value)}
-                     placeholder="e.g. Paracetamol"
-                     className="w-full bg-slate-800 border border-slate-600 rounded-xl
-                                px-3 py-2 text-sm text-slate-200 placeholder-slate-500
-                                outline-none focus:border-blue-500"/>
+              <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5">
+                Medicine Name *
+              </label>
+              <input
+                value={medName}
+                onChange={(e) => setMedName(e.target.value)}
+                placeholder="e.g. Amoxicillin, Metformin"
+                className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
+              />
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Dosage</label>
-              <input value={dosage} onChange={e => setDosage(e.target.value)}
-                     placeholder="e.g. 500mg"
-                     className="w-full bg-slate-800 border border-slate-600 rounded-xl
-                                px-3 py-2 text-sm text-slate-200 placeholder-slate-500
-                                outline-none focus:border-blue-500"/>
+              <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5">
+                Dosage & Strength
+              </label>
+              <input
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                placeholder="e.g. 500mg, 1 tablet"
+                className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
+              />
             </div>
           </div>
 
-          {/* Duration + Notes */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Duration (days)</label>
-              <input type="number" value={duration} onChange={e => setDuration(e.target.value)}
-                     min="1" max="365"
-                     className="w-full bg-slate-800 border border-slate-600 rounded-xl
-                                px-3 py-2 text-sm text-slate-200 outline-none
-                                focus:border-blue-500"/>
+              <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5">
+                Duration (Days)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="365"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111]"
+              />
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Notes (optional)</label>
-              <input value={notes} onChange={e => setNotes(e.target.value)}
-                     placeholder="e.g. Take after food"
-                     className="w-full bg-slate-800 border border-slate-600 rounded-xl
-                                px-3 py-2 text-sm text-slate-200 placeholder-slate-500
-                                outline-none focus:border-blue-500"/>
+              <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5">
+                Instructions / Notes
+              </label>
+              <input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Take with warm water after lunch"
+                className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
+              />
             </div>
           </div>
 
-          {/* Time slots — fully user defined */}
-          <div className="mb-4">
-            <label className="text-xs text-slate-400 mb-2 block">
-              Reminder Times * 
-              <span className="text-slate-600 ml-1">(add as many as you need)</span>
+          {/* Time Slots */}
+          <div>
+            <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5">
+              Scheduled Daily Dose Times *
             </label>
-
-            {/* Existing times */}
             <div className="flex flex-wrap gap-2 mb-3">
-              {times.map(t => (
-                <div key={t}
-                     className="flex items-center gap-1.5 bg-blue-900/40
-                                border border-blue-700 text-blue-300
-                                text-xs px-3 py-1.5 rounded-full">
-                  🕐 {t}
+              {times.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-1.5 bg-[#8C907E] text-white text-xs uppercase tracking-wider px-3 py-1.5"
+                >
+                  <span>{t}</span>
                   {times.length > 1 && (
-                    <button onClick={() => removeTime(t)}
-                            className="text-blue-400 hover:text-red-400
-                                       font-bold ml-1 leading-none">
+                    <button
+                      type="button"
+                      onClick={() => removeTime(t)}
+                      className="text-white/80 hover:text-white"
+                    >
                       ×
                     </button>
                   )}
-                </div>
+                </span>
               ))}
             </div>
 
-            {/* Add new time */}
-            <div className="flex gap-2">
-              <input type="time" value={newTime}
-                     onChange={e => setNewTime(e.target.value)}
-                     className="flex-1 bg-slate-800 border border-slate-600
-                                rounded-xl px-3 py-2 text-sm text-slate-200
-                                outline-none focus:border-blue-500"/>
-              <button onClick={addTime}
-                      className="bg-slate-700 hover:bg-slate-600 text-white
-                                 text-sm px-4 py-2 rounded-xl transition-colors
-                                 font-medium whitespace-nowrap">
+            <div className="flex gap-2 max-w-xs">
+              <input
+                type="time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+                className="bg-white border border-[#EAE8E2] focus:border-[#111111] px-3 py-2 text-sm text-[#111111]"
+              />
+              <button
+                type="button"
+                onClick={addTime}
+                className="btn-kaira-outline text-xs !py-2 !px-4"
+              >
                 + Add Time
               </button>
             </div>
           </div>
 
-          <button onClick={addReminder}
-                  disabled={!medName.trim() || times.length === 0}
-                  className="w-full bg-blue-600 hover:bg-blue-500
-                             disabled:bg-slate-700 disabled:text-slate-500
-                             text-white font-bold py-2.5 rounded-xl transition-colors">
-            Add Reminder
-          </button>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={addReminder}
+              disabled={!medName.trim() || times.length === 0}
+              className="btn-kaira-dark text-xs !py-3 !px-8"
+            >
+              Save Schedule Reminder
+            </button>
+          </div>
         </div>
       )}
 
       {/* Reminders list */}
       {reminders.length === 0 ? (
-        <div className="text-center py-8 text-slate-600">
-          <p className="text-4xl mb-3">⏰</p>
-          <p className="text-sm">No reminders yet.</p>
-          <p className="text-xs mt-1">Click "+ Add Reminder" to get started.</p>
+        <div className="text-center py-12 bg-[#FAF9F6] border border-[#EAE8E2]">
+          <Clock className="w-10 h-10 mx-auto text-[#D3D7C9] mb-3" />
+          <h4 className="font-serif text-lg text-[#111111]">No Medication Schedules Active</h4>
+          <p className="text-xs text-[#8A8D83] mt-1 max-w-sm mx-auto">
+            Add your daily prescribed medicines to monitor daily adherence and receive reminder alerts.
+          </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {reminders.map(reminder => {
+        <div className="space-y-4">
+          {reminders.map((reminder) => {
             const progress = getTodayProgress(reminder);
-            const pct      = Math.round((progress.taken / progress.total) * 100);
-            return (
-              <div key={reminder.id}
-                   className={`border rounded-xl p-4 transition-all
-                               ${reminder.active
-                                 ? "bg-slate-900/60 border-slate-600"
-                                 : "bg-slate-900/20 border-slate-700 opacity-60"}`}>
+            const pct = Math.round((progress.taken / progress.total) * 100);
 
-                {/* Top row */}
-                <div className="flex items-start justify-between mb-3">
+            return (
+              <div
+                key={reminder.id}
+                className={`p-6 border transition-all ${
+                  reminder.active
+                    ? "bg-white border-[#EAE8E2] shadow-sm"
+                    : "bg-[#FAF9F6] border-[#F1F1F0] opacity-60"
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-bold">{reminder.medicine}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-serif text-xl text-[#111111] font-medium">
+                        {reminder.medicine}
+                      </span>
                       {reminder.dosage && (
-                        <span className="text-xs bg-slate-700 text-slate-300
-                                         px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-semibold uppercase tracking-wider bg-[#F1F1F0] text-[#606456] px-2.5 py-0.5 border border-[#EAE8E2]">
                           {reminder.dosage}
                         </span>
                       )}
                     </div>
                     {reminder.notes && (
-                      <p className="text-xs text-slate-500 mt-0.5">{reminder.notes}</p>
+                      <p className="text-xs text-[#606456] mt-1.5 flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#8A8D83]" />
+                        <span>{reminder.notes}</span>
+                      </p>
                     )}
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {reminder.duration} days · {reminder.times.length}x daily
+                    <p className="text-[11px] text-[#8A8D83] mt-1 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#8A8D83]" />
+                      <span>{reminder.duration} days protocol · {reminder.times.length} daily dose{reminder.times.length > 1 ? "s" : ""}</span>
                     </p>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <button onClick={() => toggleActive(reminder.id)}
-                            className={`text-xs px-3 py-1 rounded-full border font-medium
-                                        ${reminder.active
-                                          ? "bg-green-900/40 border-green-700 text-green-400"
-                                          : "bg-slate-700 border-slate-600 text-slate-400"}`}>
+                    <button
+                      type="button"
+                      onClick={() => toggleActive(reminder.id)}
+                      className={`text-[11px] uppercase tracking-wider px-3 py-1 font-semibold border ${
+                        reminder.active
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-stone-100 text-stone-600 border-stone-200"
+                      }`}
+                    >
                       {reminder.active ? "Active" : "Paused"}
                     </button>
-                    <button onClick={() => deleteReminder(reminder.id)}
-                            className="text-slate-600 hover:text-red-400 text-xl leading-none">
-                      ×
+                    <button
+                      type="button"
+                      onClick={() => deleteReminder(reminder.id)}
+                      className="p-1.5 text-[#8A8D83] hover:text-red-600 transition-colors"
+                      aria-label="Delete Reminder"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
                 {/* Progress bar */}
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs text-slate-500 mb-1">
-                    <span>Today's progress</span>
-                    <span>{progress.taken}/{progress.total} taken</span>
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-[#8A8D83] mb-1.5 font-medium">
+                    <span className="uppercase tracking-wider text-[11px]">Today's Adherence</span>
+                    <span>{progress.taken} of {progress.total} taken ({pct}%)</span>
                   </div>
-                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full transition-all"
-                         style={{ width: `${pct}%` }}/>
+                  <div className="w-full h-1.5 bg-[#F1F1F0] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#8C907E] transition-all duration-500 ease-out"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
 
-                {/* Time slots */}
-                <div className="flex flex-wrap gap-2">
-                  {reminder.times.map(time => {
+                {/* Dose time pills */}
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F1F1F0]">
+                  {reminder.times.map((time) => {
                     const taken = isTaken(reminder, time);
                     return (
-                      <button key={time} onClick={() => markTaken(reminder.id, time)}
-                              className={`flex items-center gap-1.5 text-xs px-3 py-1.5
-                                          rounded-full border transition-all font-medium
-                                          ${taken
-                                            ? "bg-green-900/40 border-green-700 text-green-400"
-                                            : "bg-slate-800 border-slate-600 text-slate-400 hover:border-blue-500"}`}>
-                        {taken ? "✅" : "🕐"} {time} {taken ? "Taken" : "Pending"}
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => markTaken(reminder.id, time)}
+                        className={`text-xs uppercase tracking-wider px-3 py-1.5 border transition-all flex items-center gap-2 ${
+                          taken
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold"
+                            : "bg-white border-[#EAE8E2] text-[#606456] hover:border-[#111111]"
+                        }`}
+                      >
+                        {taken ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Clock className="w-3.5 h-3.5 text-[#8A8D83]" />}
+                        <span>{time}</span>
+                        <span>{taken ? "✓ Taken" : "Pending"}</span>
                       </button>
                     );
                   })}

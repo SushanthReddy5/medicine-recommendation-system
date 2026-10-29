@@ -1,198 +1,275 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
-  Chart as ChartJS, CategoryScale, LinearScale,
-  BarElement, ArcElement, PointElement, LineElement,
-  Title, Tooltip, Legend, Filler
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
 } from "chart.js";
 import { Bar, Pie, Line } from "react-chartjs-2";
+import StatCard from "../ui/StatCard";
+import { BarChart3, Pill, Activity, AlertCircle, ArrowRight } from "lucide-react";
 
 ChartJS.register(
-  CategoryScale, LinearScale, BarElement, ArcElement,
-  PointElement, LineElement, Title, Tooltip, Legend, Filler
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
 );
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:5001";
 
 const SEVERITY_COLORS = {
-  mild    : "#22c55e",
-  moderate: "#f59e0b",
-  severe  : "#ef4444",
-  unknown : "#64748b",
+  mild: "#8C907E",
+  moderate: "#D4A373",
+  severe: "#C86D51",
+  unknown: "#A8A59C",
 };
 
-function StatCard({ icon, label, value, sub }) {
-  return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
-      <div className="flex items-center gap-3 mb-2">
-        <span className="text-2xl">{icon}</span>
-        <p className="text-slate-400 text-sm">{label}</p>
-      </div>
-      <p className="text-3xl font-bold text-white">{value}</p>
-      {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
-    </div>
-  );
-}
-
 export default function Dashboard() {
-  const [stats, setStats]     = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${API}/api/dashboard`)
-      .then(r => r.json())
-      .then(d => { setStats(d); setLoading(false); })
+      .then((r) => r.json())
+      .then((d) => {
+        setStats(d);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-5xl mb-4 animate-pulse">📊</div>
-        <p className="text-slate-400">Loading dashboard...</p>
+  if (loading) {
+    return (
+      <div className="py-24 text-center">
+        <div className="w-12 h-12 rounded-full border-2 border-[#8C907E] border-t-transparent animate-spin mx-auto mb-4" />
+        <p className="text-xs uppercase tracking-widest text-[#8A8D83]">
+          Loading clinical dashboard...
+        </p>
       </div>
-    </div>
-  );
+    );
+  }
 
-  if (!stats || stats.total_searches === 0) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-6xl mb-4">🩺</p>
-        <p className="text-xl text-white mb-2">No data yet!</p>
-        <p className="text-slate-400 mb-6">Make some searches first to see analytics.</p>
-        <a href="/" className="bg-blue-600 hover:bg-blue-500 text-white
-                               px-6 py-3 rounded-xl font-bold transition-colors">
-          Go Search →
-        </a>
+  if (!stats || stats.total_searches === 0) {
+    return (
+      <div className="py-24 max-w-xl mx-auto px-4 text-center">
+        <div className="kaira-card bg-white border border-[#EAE8E2] p-12">
+          <Activity className="w-12 h-12 mx-auto text-[#8C907E] mb-4" />
+          <h2 className="font-serif text-2xl text-[#111111] mb-2">No Clinical Data Recorded Yet</h2>
+          <p className="text-xs text-[#606456] mb-6 leading-relaxed">
+            Begin by assessing your symptoms in the Diagnostic Studio to start compiling health trend analytics.
+          </p>
+          <Link to="/" className="btn-kaira-dark text-xs !py-3 !px-6 inline-flex items-center gap-2">
+            <span>Launch Symptom Evaluation</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   const barData = {
-    labels  : stats.top_diseases.map(d => d.disease),
-    datasets: [{
-      label          : "Searches",
-      data           : stats.top_diseases.map(d => d.count),
-      backgroundColor: ["#3b82f6","#6366f1","#8b5cf6","#a78bfa","#c4b5fd"],
-      borderRadius   : 8,
-    }]
+    labels: (stats.top_diseases || []).map((d) => d.disease),
+    datasets: [
+      {
+        label: "Consultations",
+        data: (stats.top_diseases || []).map((d) => d.count),
+        backgroundColor: ["#8C907E", "#A3AA93", "#B9BFAB", "#CBD0C0", "#D3D7C9"],
+        borderRadius: 2,
+      },
+    ],
   };
 
   const pieData = {
-    labels  : stats.severity_dist.map(s => s.severity || "unknown"),
-    datasets: [{
-      data           : stats.severity_dist.map(s => s.count),
-      backgroundColor: stats.severity_dist.map(s =>
-        SEVERITY_COLORS[s.severity?.toLowerCase()] || SEVERITY_COLORS.unknown
-      ),
-      borderWidth: 0,
-    }]
+    labels: (stats.severity_dist || []).map((s) => s.severity || "unknown"),
+    datasets: [
+      {
+        data: (stats.severity_dist || []).map((s) => s.count),
+        backgroundColor: (stats.severity_dist || []).map(
+          (s) => SEVERITY_COLORS[s.severity?.toLowerCase()] || SEVERITY_COLORS.unknown
+        ),
+        borderWidth: 1,
+        borderColor: "#ffffff",
+      },
+    ],
   };
 
   const lineData = {
-    labels  : stats.daily_searches.map(d => d.date),
-    datasets: [{
-      label               : "Searches",
-      data                : stats.daily_searches.map(d => d.count),
-      borderColor         : "#3b82f6",
-      backgroundColor     : "rgba(59,130,246,0.1)",
-      fill                : true,
-      tension             : 0.4,
-      pointBackgroundColor: "#3b82f6",
-    }]
+    labels: (stats.daily_searches || []).map((d) => d.date),
+    datasets: [
+      {
+        label: "Daily Consultations",
+        data: (stats.daily_searches || []).map((d) => d.count),
+        borderColor: "#8C907E",
+        backgroundColor: "rgba(140, 144, 126, 0.12)",
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: "#111111",
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+      },
+    ],
   };
 
   const chartOptions = (title) => ({
     responsive: true,
-    plugins   : {
-      legend: { labels: { color: "#94a3b8" } },
-      title : { display: true, text: title, color: "#e2e8f0", font: { size: 14 } },
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: "#4A4D45",
+          font: { family: "Jost", size: 12 },
+        },
+      },
+      title: {
+        display: true,
+        text: title,
+        color: "#111111",
+        font: { family: "Marcellus", size: 16, weight: "normal" },
+        padding: { bottom: 16 },
+      },
     },
     scales: {
-      x: { ticks: { color: "#64748b" }, grid: { color: "#1e293b" } },
-      y: { ticks: { color: "#64748b" }, grid: { color: "#1e293b" } },
+      x: {
+        ticks: { color: "#8A8D83", font: { family: "Jost", size: 11 } },
+        grid: { color: "#F1F1F0" },
+      },
+      y: {
+        ticks: { color: "#8A8D83", font: { family: "Jost", size: 11 } },
+        grid: { color: "#F1F1F0" },
+      },
     },
   });
 
   const pieOptions = (title) => ({
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
-      legend: { position: "bottom", labels: { color: "#94a3b8" } },
-      title : { display: true, text: title, color: "#e2e8f0", font: { size: 14 } },
+      legend: {
+        position: "bottom",
+        labels: {
+          color: "#4A4D45",
+          font: { family: "Jost", size: 12 },
+          padding: 14,
+        },
+      },
+      title: {
+        display: true,
+        text: title,
+        color: "#111111",
+        font: { family: "Marcellus", size: 16, weight: "normal" },
+        padding: { bottom: 16 },
+      },
     },
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">❤️‍🩹</span>
-            <div>
-              <h1 className="text-xl font-bold text-white">MediAssist</h1>
-              <p className="text-xs text-slate-400">Health Analytics Dashboard</p>
+    <div className="py-16 bg-[#F8F7F4] min-h-[calc(100vh-80px)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8C907E] block">
+            Clinical Telemetry
+          </span>
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#111111] font-normal">
+            Personal Health Analytics & Trends
+          </h1>
+          <p className="text-sm text-[#606456] max-w-xl mx-auto font-light leading-relaxed">
+            Aggregate clinical intelligence compiled from your diagnostic queries and prescription evaluations.
+          </p>
+        </div>
+
+        {/* 4 Stat Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <StatCard
+            icon={BarChart3}
+            label="Total Searches"
+            value={stats.total_searches}
+            sub="All-time queries"
+          />
+          <StatCard
+            icon={Activity}
+            label="Top Condition"
+            value={stats.top_diseases?.[0]?.disease || "—"}
+            sub={`${stats.top_diseases?.[0]?.count || 0} occurrences`}
+          />
+          <StatCard
+            icon={Pill}
+            label="Top Medicine"
+            value={stats.top_medicines?.[0]?.medicine || "—"}
+            sub={`${stats.top_medicines?.[0]?.count || 0} prescribed`}
+          />
+          <StatCard
+            icon={AlertCircle}
+            label="Frequent Symptom"
+            value={stats.top_symptoms?.[0]?.symptom || "—"}
+            sub={`${stats.top_symptoms?.[0]?.count || 0} reported`}
+          />
+        </div>
+
+        {/* Charts Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="kaira-card bg-white border border-[#EAE8E2] p-6 shadow-kaira">
+            <Bar data={barData} options={chartOptions("Top Diagnosed Conditions")} />
+          </div>
+          <div className="kaira-card bg-white border border-[#EAE8E2] p-6 shadow-kaira">
+            <Pie data={pieData} options={pieOptions("Diagnostic Severity Distribution")} />
+          </div>
+        </div>
+
+        {/* Activity Timeline Chart */}
+        <div className="kaira-card bg-white border border-[#EAE8E2] p-6 shadow-kaira">
+          <Line data={lineData} options={chartOptions("Consultation Activity (Recent Timeline)")} />
+        </div>
+
+        {/* Frequent Symptoms Breakdown */}
+        {stats.top_symptoms?.length > 0 && (
+          <div className="kaira-card bg-white border border-[#EAE8E2] p-8 shadow-kaira">
+            <h3 className="font-serif text-xl text-[#111111] mb-6">
+              Most Frequently Reported Symptoms
+            </h3>
+            <div className="space-y-4">
+              {stats.top_symptoms.slice(0, 6).map((s, idx) => {
+                const pct = Math.round((s.count / stats.total_searches) * 100);
+                return (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-medium">
+                      <span className="text-[#111111] uppercase tracking-wider">
+                        {idx + 1}. {s.symptom}
+                      </span>
+                      <span className="text-[#8A8D83]">
+                        {s.count} times ({pct}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#F1F1F0] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#8C907E] transition-all duration-500 ease-out"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <a href="/" className="text-sm bg-blue-600 hover:bg-blue-500
-                                  text-white px-4 py-2 rounded-xl transition-colors">
-            ← Back to Search
-          </a>
-        </div>
-      </header>
+        )}
 
-      <main className="max-w-6xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">📊 Health Analytics</h2>
-          <p className="text-slate-400">Insights from your symptom searches</p>
-        </div>
-
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard icon="🔍" label="Total Searches"
-            value={stats.total_searches} sub="All time" />
-          <StatCard icon="🦠" label="Top Disease"
-            value={stats.top_diseases[0]?.disease || "—"}
-            sub={`${stats.top_diseases[0]?.count || 0} searches`} />
-          <StatCard icon="💊" label="Top Medicine"
-            value={stats.top_medicines[0]?.medicine || "—"}
-            sub={`${stats.top_medicines[0]?.count || 0} times`} />
-          <StatCard icon="🔬" label="Top Symptom"
-            value={stats.top_symptoms[0]?.symptom || "—"}
-            sub={`${stats.top_symptoms[0]?.count || 0} searches`} />
-        </div>
-
-        {/* Charts row 1 */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
-            <Bar data={barData} options={chartOptions("Top Searched Diseases")} />
-          </div>
-          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
-            <Pie data={pieData} options={pieOptions("Severity Distribution")} />
-          </div>
-        </div>
-
-        {/* Line chart */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 mb-6">
-          <Line data={lineData} options={chartOptions("Search Activity (Last 7 Days)")} />
-        </div>
-
-        {/* Top symptoms */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5">
-          <h3 className="text-white font-bold mb-4">🔬 Most Searched Symptoms</h3>
-          <div className="space-y-3">
-            {stats.top_symptoms.map((s, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-slate-500 text-sm w-4">{i + 1}</span>
-                <span className="text-slate-300 text-sm flex-1 capitalize">{s.symptom}</span>
-                <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full"
-                       style={{ width: `${(s.count / stats.total_searches) * 100}%` }}/>
-                </div>
-                <span className="text-slate-400 text-sm w-8 text-right">{s.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

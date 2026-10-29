@@ -1,26 +1,30 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { MessageSquare, X, Send, Bot, AlertTriangle } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:5001";
 
 const SUGGESTED = [
-  "What are side effects of Ibuprofen?",
-  "What should I take for a cold?",
-  "Is Paracetamol safe for children?",
-  "What foods to avoid with acidity?",
+  "What are common side effects of Ibuprofen?",
+  "What home care is advised for viral fever?",
+  "Is Paracetamol safe with slight hypertension?",
+  "What foods should be avoided with acid reflux?",
 ];
 
 export default function Chatbot() {
   const { user, token } = useAuth();
-  const [messages, setMessages] = useState([{
-    role   : "assistant",
-    content: `Hi${user ? ` ${user.name.split(" ")[0]}` : ""}! I'm MediAssist AI 🤖 How can I help you today?`
-  }]);
-  const [input, setInput]     = useState("");
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: `Hello${
+        user ? ` ${user.name.split(" ")[0]}` : ""
+      }! I am the MediAssist Clinical AI assistant. How may I assist your medical inquiries today?`,
+    },
+  ]);
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [open, setOpen]       = useState(false);
-  const bottomRef             = useRef(null);
+  const [open, setOpen] = useState(false);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,36 +39,46 @@ export default function Chatbot() {
     setLoading(true);
     try {
       const res = await fetch(`${API}/api/chat`, {
-        method : "POST",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           messages: newMessages,
-          user_profile: user ? {
-            name: user.name, age: user.age,
-            gender: user.gender, blood_group: user.blood_group,
-            allergies: user.allergies,
-          } : null,
+          user_profile: user
+            ? {
+                name: user.name,
+                age: user.age,
+                gender: user.gender,
+                blood_group: user.blood_group,
+                allergies: user.allergies,
+              }
+            : null,
         }),
       });
       const data = await res.json();
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: data.reply || "Sorry, try again."
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.reply || "I am currently unable to process that clinical inquiry. Please try again.",
+        },
+      ]);
     } catch {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "Connection error. Please try again."
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Connection error. Please verify server connectivity and try again.",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKey = e => {
+  const handleKey = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -73,158 +87,131 @@ export default function Chatbot() {
 
   return (
     <>
-      {/* Toggle button */}
-      <motion.button
+      {/* Floating Launcher Button */}
+      <button
+        type="button"
         onClick={() => setOpen(!open)}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.93 }}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full
-                   bg-gradient-to-br from-blue-600 to-violet-600
-                   text-white flex items-center justify-center
-                   text-2xl shadow-glow-blue">
-        {open ? "✕" : "💬"}
-      </motion.button>
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#111111] hover:bg-[#8C907E] text-white flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-105"
+        aria-label="Open AI Healthcare Assistant"
+      >
+        {open ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+      </button>
 
-      {/* Chat window */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0,  scale: 1 }}
-            exit={{ opacity: 0, y: 16,    scale: 0.97 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="fixed bottom-24 right-6 z-50 w-96
-                       max-w-[calc(100vw-2rem)] flex flex-col
-                       rounded-2xl overflow-hidden border border-white/10
-                       shadow-premium"
-            style={{
-              height: "520px",
-              background: "rgba(10,10,26,0.92)",
-              backdropFilter: "blur(24px)",
-            }}>
-
-            {/* Header */}
-            <div className="px-4 py-3 flex items-center gap-3 border-b border-white/5
-                            bg-gradient-to-r from-blue-600/15 to-purple-600/15">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-purple-600
-                              rounded-full flex items-center justify-center text-lg
-                              shadow-glow-blue flex-shrink-0">
-                🤖
+      {/* Chat Window */}
+      {open && (
+        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-96 max-w-[calc(100vw-2rem)] h-[540px] bg-white border border-[#EAE8E2] shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+          
+          {/* Header */}
+          <div className="bg-[#111111] text-white px-5 py-4 flex items-center justify-between border-b border-[#222]">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#8C907E] text-white flex items-center justify-center">
+                <Bot className="w-5 h-5" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">MediAssist AI</p>
-                <div className="flex items-center gap-1.5">
-                  <motion.span className="w-1.5 h-1.5 bg-green-400 rounded-full"
-                    animate={{ opacity: [1, 0.4, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}/>
-                  <p className="text-xs text-green-400">Online</p>
+              <div>
+                <h4 className="font-serif text-base tracking-wide text-white leading-tight">
+                  MediAssist Clinical AI
+                </h4>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] uppercase tracking-wider text-[#D3D7C9]">
+                    Online Assistant
+                  </span>
                 </div>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-[#A8A59C] hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            {/* Allergy badge */}
-            {user?.allergies && user.allergies.toLowerCase() !== "none" && (
-              <div className="bg-orange-500/10 border-b border-orange-500/20
-                              px-4 py-1.5 flex items-center gap-2">
-                <span className="text-orange-400 text-xs">⚠️</span>
-                <p className="text-orange-300 text-xs truncate">
-                  Allergy: <strong>{user.allergies}</strong>
-                </p>
+          {/* Allergy warning banner if user profile has allergies */}
+          {user?.allergies && user.allergies.toLowerCase() !== "none" && (
+            <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2 text-xs text-amber-900">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+              <span className="truncate">
+                Patient Allergy: <strong>{user.allergies}</strong>
+              </span>
+            </div>
+          )}
+
+          {/* Conversation Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9F6]">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[85%] p-3.5 text-xs leading-relaxed ${
+                    m.role === "user"
+                      ? "bg-[#111111] text-white"
+                      : "bg-white border border-[#EAE8E2] text-[#4A4D45] shadow-sm"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{m.content}</p>
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-[#EAE8E2] p-3 text-xs text-[#8A8D83] flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#8C907E] animate-bounce" />
+                  <span className="w-2 h-2 rounded-full bg-[#8C907E] animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-2 h-2 rounded-full bg-[#8C907E] animate-bounce [animation-delay:0.4s]" />
+                </div>
               </div>
             )}
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-              {messages.map((m, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm
-                                   leading-relaxed whitespace-pre-wrap
-                                   ${m.role === "user"
-                                     ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-sm"
-                                     : "bg-white/5 border border-white/10 text-slate-200 rounded-bl-sm"}`}>
-                    {m.content}
-                  </div>
-                </motion.div>
-              ))}
+            {/* Suggested Questions */}
+            {messages.length === 1 && !loading && (
+              <div className="pt-2 space-y-2">
+                <p className="text-[10px] uppercase tracking-wider text-[#8A8D83] text-center font-medium">
+                  Frequently Inquired:
+                </p>
+                {SUGGESTED.map((q, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => sendMessage(q)}
+                    className="w-full text-left text-xs p-2.5 bg-white border border-[#EAE8E2] hover:border-[#8C907E] text-[#606456] hover:text-[#111111] transition-colors"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              {/* Typing dots */}
-              <AnimatePresence>
-                {loading && (
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1 }}
-                    className="flex justify-start">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl
-                                    rounded-bl-sm px-4 py-3 flex gap-1">
-                      {[0, 1, 2].map(i => (
-                        <motion.span key={i}
-                          className="w-2 h-2 bg-blue-400 rounded-full block"
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{
-                            duration: 0.5,
-                            repeat: Infinity,
-                            delay: i * 0.12,
-                            ease: "easeInOut"
-                          }}/>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div ref={bottomRef} />
+          </div>
 
-              {/* Suggestions */}
-              {messages.length === 1 && !loading && (
-                <div className="space-y-1.5 pt-1">
-                  <p className="text-xs text-slate-600 text-center">Suggested</p>
-                  {SUGGESTED.map((q, i) => (
-                    <motion.button key={i}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      onClick={() => sendMessage(q)}
-                      className="w-full text-left text-xs bg-white/5
-                                 border border-white/5 hover:border-blue-500/30
-                                 text-slate-400 hover:text-blue-400
-                                 px-3 py-2 rounded-xl transition-all duration-150">
-                      {q}
-                    </motion.button>
-                  ))}
-                </div>
-              )}
-              <div ref={bottomRef}/>
-            </div>
+          {/* Input Box */}
+          <div className="p-3 bg-white border-t border-[#EAE8E2] flex items-center gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder="Inquire about symptoms, doses, or precautions..."
+              disabled={loading}
+              className="flex-1 bg-[#FAF9F6] border border-[#EAE8E2] focus:border-[#111111] px-3.5 py-2.5 text-xs text-[#111111] placeholder-[#A8A59C] outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => sendMessage()}
+              disabled={loading || !input.trim()}
+              className="btn-kaira-dark !p-2.5 disabled:opacity-40"
+              aria-label="Send message"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Input */}
-            <div className="border-t border-white/5 px-3 py-3 flex gap-2">
-              <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKey}
-                placeholder="Ask about symptoms or medicines..."
-                disabled={loading}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl
-                           px-3 py-2 text-sm text-slate-200 placeholder-slate-500
-                           outline-none focus:border-blue-500/50 disabled:opacity-50
-                           transition-colors duration-150"/>
-              <motion.button
-                onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-br from-blue-600 to-violet-600
-                           text-white px-4 py-2 rounded-xl text-sm font-bold
-                           disabled:opacity-40 disabled:cursor-not-allowed
-                           shadow-glow-blue transition-opacity duration-150">
-                →
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </>
   );
 }

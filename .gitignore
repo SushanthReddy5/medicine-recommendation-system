@@ -3,11 +3,13 @@ venv/
 backend/.env
 frontend/.env
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 node_modules/
 frontend/build/
 .DS_Store
+**/.DS_Store
 data/
 # Do NOT ignore .pkl files - needed for deployment
 # *.pkl  (intentionally commented out)

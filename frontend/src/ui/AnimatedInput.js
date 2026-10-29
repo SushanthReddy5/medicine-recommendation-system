@@ -1,46 +1,53 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import React from "react";
 
 export default function AnimatedInput({
-  label, name, type = "text", value, onChange,
-  placeholder, required, disabled, error, icon
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  required,
+  disabled,
+  error,
+  icon: Icon,
 }) {
-  const [focused, setFocused] = useState(false);
-
   return (
-    <div className="relative">
+    <div className="w-full">
       {label && (
-        <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+        <label className="block text-xs font-medium text-[#111111] uppercase tracking-[0.12em] mb-2">
           {label}
         </label>
       )}
       <div className="relative">
-        {icon && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">
-            {icon}
+        {Icon && (
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8A8D83]">
+            {typeof Icon === "string" ? (
+              <span>{Icon}</span>
+            ) : (
+              <Icon className="w-4 h-4" />
+            )}
           </span>
         )}
-        <motion.input
-          name={name} type={type} value={value}
-          onChange={onChange} placeholder={placeholder}
-          required={required} disabled={disabled}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          animate={{
-            borderColor: error ? "#ef4444" : focused ? "#3b82f6" : "rgba(255,255,255,0.1)",
-            boxShadow  : focused ? "0 0 0 3px rgba(59,130,246,0.15)" : "none",
-          }}
-          className={`w-full bg-white/5 border border-white/10 rounded-xl
-                      px-4 py-3 text-white placeholder-slate-500 text-sm
-                      transition-colors duration-200 disabled:opacity-50
-                      ${icon ? "pl-11" : ""}`}
+        <input
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          className={`w-full bg-white border ${
+            error ? "border-red-400" : "border-[#EAE8E2]"
+          } focus:border-[#111111] text-[#111111] placeholder-[#A8A59C] text-sm px-4 py-3 transition-colors duration-200 disabled:bg-[#F8F7F4] disabled:text-[#8A8D83] ${
+            Icon ? "pl-11" : ""
+          }`}
         />
       </div>
       {error && (
-        <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
-                  className="text-red-400 text-xs mt-1">
+        <p className="text-red-600 text-xs mt-1.5 font-medium">
           {error}
-        </motion.p>
+        </p>
       )}
     </div>
   );

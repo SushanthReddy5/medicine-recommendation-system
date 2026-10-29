@@ -1,269 +1,372 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
+import { MapPin, Navigation, Phone, ExternalLink, AlertCircle, Building2, Pill } from "lucide-react";
 
 const OVERPASS_API = "https://overpass-api.de/api/interpreter";
-const PLACE_TYPES  = [
-  { label: "🏥 Hospitals",  key: "hospital" },
-  { label: "💊 Pharmacies", key: "pharmacy" },
-  { label: "🏨 Clinics",    key: "clinic"   },
+const PLACE_TYPES = [
+  { label: "Hospitals", key: "hospital", icon: Building2 },
+  { label: "Pharmacies", key: "pharmacy", icon: Pill },
+  { label: "Clinics", key: "clinic", icon: Building2 },
 ];
 const PRESET_RADII = [1, 2, 5, 10, 20];
 
 function getDistance(lat1, lon1, lat2, lon2) {
-  const R  = 6371;
+  const R = 6371;
   const dL = ((lat2 - lat1) * Math.PI) / 180;
   const dl = ((lon2 - lon1) * Math.PI) / 180;
-  const a  = Math.sin(dL/2)*Math.sin(dL/2) + Math.cos((lat1*Math.PI)/180)*Math.cos((lat2*Math.PI)/180)*Math.sin(dl/2)*Math.sin(dl/2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a =
+    Math.sin(dL / 2) * Math.sin(dL / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dl / 2) *
+      Math.sin(dl / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 export default function HospitalLocator() {
-  const [location, setLocation]     = useState(null);
-  const [places, setPlaces]         = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState(null);
+  const [location, setLocation] = useState(null);
+  const [places, setPlaces] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [activeType, setActiveType] = useState("hospital");
-  const [radiusKm, setRadiusKm]     = useState(2);
-  const [customKm, setCustomKm]     = useState("");
-  const [useCustom, setUseCustom]   = useState(false);
-  const mapRef         = useRef(null);
+  const [radiusKm, setRadiusKm] = useState(5);
+  const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const markersRef     = useRef([]);
+  const markersRef = useRef([]);
 
-  const getRadiusMeters = () => {
-    if (useCustom && customKm) return Math.min(parseInt(customKm) * 1000, 50000);
-    return radiusKm * 1000;
-  };
-  const getRadiusLabel = () => {
-    if (useCustom && customKm) return `${customKm}km`;
-    return `${radiusKm}km`;
-  };
-
-  const loadLeaflet = () => new Promise(resolve => {
-    if (window.L) { resolve(); return; }
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css"; link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = resolve;
-    document.head.appendChild(script);
-  });
+  const loadLeaflet = () =>
+    new Promise((resolve) => {
+      if (window.L) {
+        resolve();
+        return;
+      }
+      if (!document.getElementById("leaflet-css")) {
+        const link = document.createElement("link");
+        link.id = "leaflet-css";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = resolve;
+      document.head.appendChild(script);
+    });
 
   const setupMap = (lat, lng) => {
     if (!mapRef.current || !window.L) return;
-    if (mapInstanceRef.current) { mapInstanceRef.current.remove(); }
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+    }
     const map = window.L.map(mapRef.current).setView([lat, lng], 13);
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors",
     }).addTo(map);
+
     window.L.circleMarker([lat, lng], {
-      radius: 8, fillColor: "#3b82f6", color: "#fff", weight: 2, fillOpacity: 1,
-    }).addTo(map).bindPopup("📍 Your Location");
+      radius: 8,
+      fillColor: "#111111",
+      color: "#ffffff",
+      weight: 2,
+      fillOpacity: 1,
+    })
+      .addTo(map)
+      .bindPopup("<b>📍 Current Position</b>");
+
     mapInstanceRef.current = map;
   };
 
   const addMarkers = (results) => {
     if (!mapInstanceRef.current || !window.L) return;
-    markersRef.current.forEach(m => m.remove());
+    markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
-    results.forEach(p => {
+    results.forEach((p) => {
       const icon = window.L.divIcon({
-        html: `<div style="background:#ef4444;color:white;padding:3px 8px;border-radius:6px;font-size:13px;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.4)">${p.type === "pharmacy" ? "💊" : p.type === "clinic" ? "🏨" : "🏥"}</div>`,
-        className: "", iconAnchor: [14, 14],
+        html: `<div style="background:#8C907E;color:white;padding:4px 8px;font-size:11px;font-weight:600;letter-spacing:0.05em;border:1px solid #111;box-shadow:0 2px 6px rgba(0,0,0,0.15)">${
+          p.type === "pharmacy" ? "💊" : "🏥"
+        }</div>`,
+        className: "",
+        iconAnchor: [14, 14],
       });
       const marker = window.L.marker([p.lat, p.lng], { icon })
         .addTo(mapInstanceRef.current)
-        .bindPopup(`<b>${p.name}</b><br/>${p.address ? `📍 ${p.address}<br/>` : ""}${p.phone ? `📞 ${p.phone}<br/>` : ""}<span style="color:#3b82f6;font-weight:bold">${p.distance.toFixed(1)} km away</span>`);
+        .bindPopup(
+          `<b>${p.name}</b><br/>${p.address ? `📍 ${p.address}<br/>` : ""}${
+            p.phone ? `📞 ${p.phone}<br/>` : ""
+          }<span style="color:#8C907E;font-weight:bold">${p.distance.toFixed(
+            1
+          )} km away</span>`
+        );
       markersRef.current.push(marker);
     });
   };
 
   const fetchPlaces = async (lat, lng, type, rad) => {
-    setLoading(true); setError(null); setPlaces([]);
+    setLoading(true);
+    setError(null);
+    setPlaces([]);
     try {
-      const query = `[out:json][timeout:30];(node["amenity"="${type}"](around:${rad},${lat},${lng});way["amenity"="${type}"](around:${rad},${lat},${lng}););out body center;`;
-      const res  = await fetch(OVERPASS_API, {
+      const radMeters = rad * 1000;
+      const query = `[out:json][timeout:30];(node["amenity"="${type}"](around:${radMeters},${lat},${lng});way["amenity"="${type}"](around:${radMeters},${lat},${lng}););out body center;`;
+      const res = await fetch(OVERPASS_API, {
         method: "POST",
         body: `data=${encodeURIComponent(query)}`,
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
       const data = await res.json();
       const results = (data.elements || [])
-        .map(el => {
+        .map((el) => {
           const elLat = el.lat || el.center?.lat;
-          const elLng = el.lon  || el.center?.lon;
+          const elLng = el.lon || el.center?.lon;
           if (!elLat || !elLng) return null;
           return {
             id: el.id,
             name: el.tags?.name || `Unnamed ${type}`,
-            address: [el.tags?.["addr:street"], el.tags?.["addr:city"]].filter(Boolean).join(", "),
-            phone: el.tags?.phone || el.tags?.["contact:phone"] || null,
-            lat: elLat, lng: elLng, type,
+            lat: elLat,
+            lng: elLng,
+            address:
+              el.tags?.["addr:street"] ||
+              el.tags?.["addr:full"] ||
+              el.tags?.amenity ||
+              "",
+            phone: el.tags?.phone || el.tags?.["contact:phone"] || "",
+            type: type,
             distance: getDistance(lat, lng, elLat, elLng),
           };
         })
         .filter(Boolean)
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 20);
+        .sort((a, b) => a.distance - b.distance);
+
       setPlaces(results);
-      setTimeout(() => addMarkers(results), 300);
-    } catch (e) {
-      setError("Failed to fetch nearby places. Check your internet connection.");
+      addMarkers(results);
+    } catch (err) {
+      setError("Failed to fetch medical facilities. Overpass service may be busy.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = async () => {
-    const rad = getRadiusMeters();
-    if (location) { fetchPlaces(location.lat, location.lng, activeType, rad); return; }
-    if (!navigator.geolocation) { setError("Geolocation not supported."); return; }
-    setLoading(true); setError(null);
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your current browser.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
     navigator.geolocation.getCurrentPosition(
-      async pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        setLocation({ lat, lng });
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation({ lat: latitude, lng: longitude });
         await loadLeaflet();
-        setTimeout(() => setupMap(lat, lng), 200);
-        fetchPlaces(lat, lng, activeType, rad);
+        setupMap(latitude, longitude);
+        fetchPlaces(latitude, longitude, activeType, radiusKm);
       },
-      () => { setLoading(false); setError("Could not get location. Please allow location access."); }
+      (err) => {
+        setLoading(false);
+        setError("Unable to obtain your location. Please ensure location permissions are granted.");
+      },
+      { timeout: 15000 }
     );
   };
 
-  const handleTypeChange = (type) => {
-    setActiveType(type);
-    if (location) fetchPlaces(location.lat, location.lng, type, getRadiusMeters());
+  const handleTypeChange = (newType) => {
+    setActiveType(newType);
+    if (location) {
+      fetchPlaces(location.lat, location.lng, newType, radiusKm);
+    }
   };
 
-  const activeClass   = "bg-blue-600 border-blue-500 text-white";
-  const inactiveClass = "bg-slate-800 border-slate-700 text-slate-400 hover:border-blue-500";
-  const activeRClass  = "bg-blue-600 border-blue-500 text-white";
-  const inactiveRClass = "bg-slate-900 border-slate-600 text-slate-400 hover:border-blue-500";
+  const handleRadiusChange = (newRadius) => {
+    setRadiusKm(newRadius);
+    if (location) {
+      fetchPlaces(location.lat, location.lng, activeType, newRadius);
+    }
+  };
 
   return (
-    <div className="space-y-5">
-
-      {/* Type tabs */}
-      <div className="flex gap-2">
-        {PLACE_TYPES.map(pt => (
-          <button key={pt.key} onClick={() => handleTypeChange(pt.key)}
-                  className={`flex-1 text-sm py-3 px-4 rounded-xl border font-medium transition-colors ${activeType === pt.key ? activeClass : inactiveClass}`}>
-            {pt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Radius */}
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4">
-        <p className="text-sm font-semibold text-slate-300 mb-3">Search Radius</p>
-        <div className="flex gap-2 mb-3 flex-wrap">
-          {PRESET_RADII.map(r => (
-            <button key={r} onClick={() => { setRadiusKm(r); setUseCustom(false); }}
-                    className={`text-sm px-4 py-2 rounded-xl border transition-colors ${!useCustom && radiusKm === r ? activeRClass : inactiveRClass}`}>
-              {r} km
-            </button>
-          ))}
-          <button onClick={() => setUseCustom(!useCustom)}
-                  className={`text-sm px-4 py-2 rounded-xl border transition-colors ${useCustom ? "bg-purple-600 border-purple-500 text-white" : "bg-slate-900 border-slate-600 text-slate-400 hover:border-purple-500"}`}>
-            ✏️ Custom
-          </button>
+    <div className="kaira-card bg-white border border-[#EAE8E2] p-6 sm:p-10 shadow-kaira space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#F1F1F0] gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[#FAF9F6] border border-[#EAE8E2] flex items-center justify-center text-[#8C907E]">
+            <MapPin className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-serif text-2xl text-[#111111] font-normal">
+              Medical Facility & Emergency Locator
+            </h3>
+            <p className="text-xs text-[#606456] mt-0.5">
+              Instant geolocation of hospitals, outpatient clinics, and certified pharmacies
+            </p>
+          </div>
         </div>
 
-        {useCustom && (
-          <div className="flex items-center gap-3 mt-2">
-            <input type="number" value={customKm}
-                   onChange={e => setCustomKm(e.target.value)}
-                   onKeyDown={e => e.key === "Enter" && handleSearch()}
-                   placeholder="Enter km e.g. 15"
-                   min="1" max="50"
-                   className="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-purple-500 placeholder-slate-500"/>
-            <span className="text-slate-400 text-sm font-medium">km</span>
+        <button
+          type="button"
+          onClick={getUserLocation}
+          className="btn-kaira-dark text-xs !py-3 !px-6 flex items-center gap-2 self-start sm:self-auto"
+        >
+          <Navigation className="w-4 h-4" />
+          <span>{location ? "Refresh Location" : "Detect Current Location"}</span>
+        </button>
+      </div>
+
+      {/* Filter Controls Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 bg-[#FAF9F6] border border-[#EAE8E2]">
+        {/* Facility Types */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] uppercase tracking-wider text-[#8A8D83] font-semibold mr-1">
+            Facility:
+          </span>
+          {PLACE_TYPES.map((t) => {
+            const active = activeType === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => handleTypeChange(t.key)}
+                className={`text-xs uppercase tracking-wider px-3 py-1.5 border transition-all ${
+                  active
+                    ? "bg-[#111111] border-[#111111] text-white font-medium"
+                    : "bg-white border-[#EAE8E2] text-[#606456] hover:border-[#8C907E]"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Radius presets */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] uppercase tracking-wider text-[#8A8D83] font-semibold mr-1">
+            Search Radius:
+          </span>
+          {PRESET_RADII.map((r) => {
+            const active = radiusKm === r;
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => handleRadiusChange(r)}
+                className={`text-xs px-2.5 py-1 border transition-all ${
+                  active
+                    ? "bg-[#8C907E] border-[#8C907E] text-white font-semibold"
+                    : "bg-white border-[#EAE8E2] text-[#606456] hover:border-[#8C907E]"
+                }`}
+              >
+                {r} km
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Error Notice */}
+      {error && (
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5">
+          <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Map Container */}
+      <div className="relative border border-[#EAE8E2] overflow-hidden">
+        <div
+          ref={mapRef}
+          className="w-full h-80 sm:h-96 bg-[#F1F1F0] z-0"
+        />
+        {!location && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-10">
+            <Navigation className="w-10 h-10 text-[#8C907E] mb-3 animate-pulse" />
+            <h4 className="font-serif text-xl text-[#111111]">Location Access Required</h4>
+            <p className="text-xs text-[#606456] mt-1 max-w-sm mb-4">
+              Click below to grant geolocation permission and locate medical infrastructure near you.
+            </p>
+            <button
+              type="button"
+              onClick={getUserLocation}
+              className="btn-kaira-dark text-xs !py-2.5 !px-6"
+            >
+              Locate Nearby Facilities
+            </button>
           </div>
         )}
-
-        <p className="text-xs text-slate-500 mt-3">
-          Searching within <strong className="text-blue-400">{getRadiusLabel()}</strong> of your location
-          {getRadiusMeters() >= 10000 && <span className="text-yellow-500 ml-1">· Large radius may take longer</span>}
-        </p>
       </div>
 
-      {/* Search button */}
-      <button onClick={handleSearch} disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-4 rounded-2xl transition-colors text-base">
-        {loading ? "🔄 Searching..." : location ? `🔄 Search ${getRadiusLabel()} for ${activeType}s` : `📍 Find Nearby ${activeType.charAt(0).toUpperCase() + activeType.slice(1)}s`}
-      </button>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-900/30 border border-red-700 rounded-xl p-4 text-red-300 text-sm">
-          ⚠️ {error}
+      {/* Results List */}
+      {loading ? (
+        <div className="py-12 text-center text-xs uppercase tracking-wider text-[#8A8D83]">
+          Scanning verified medical registries within {radiusKm}km...
         </div>
-      )}
+      ) : places.length > 0 ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F1F0]">
+            <h4 className="font-serif text-xl text-[#111111]">
+              Discovered Facilities ({places.length})
+            </h4>
+            <span className="text-xs uppercase tracking-wider text-[#8A8D83]">
+              Sorted by proximity
+            </span>
+          </div>
 
-      {/* Map */}
-      {location && (
-        <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-slate-700" style={{ height: "320px" }}/>
-      )}
-
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-8 text-slate-400">
-          <svg className="animate-spin h-8 w-8 mx-auto mb-3" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-          </svg>
-          Searching within {getRadiusLabel()}...
-        </div>
-      )}
-
-      {/* Results */}
-      {places.length > 0 && (
-        <div>
-          <p className="text-sm text-slate-400 mb-3">
-            Found <strong className="text-white">{places.length}</strong> places within <strong className="text-blue-400">{getRadiusLabel()}</strong>
-          </p>
-          <div className="space-y-3">
-            {places.map(place => (
-              <div key={place.id} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 hover:border-slate-500 transition-colors">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-white font-semibold truncate">
-                      {place.type === "pharmacy" ? "💊" : place.type === "clinic" ? "🏨" : "🏥"} {place.name}
-                    </p>
-                    {place.address && <p className="text-slate-500 text-sm mt-1 truncate">📍 {place.address}</p>}
-                    {place.phone && (
-                      <p className="text-slate-400 text-sm mt-0.5">
-                        📞 <a href={`tel:${place.phone}`} className="hover:text-blue-400 transition-colors">{place.phone}</a>
-                      </p>
-                    )}
-                    <p className="text-blue-400 text-sm mt-1 font-medium">📏 {place.distance.toFixed(1)} km away</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {places.map((place) => (
+              <div
+                key={place.id}
+                className="p-5 border border-[#EAE8E2] bg-[#FAF9F6] hover:border-[#111111] transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h5 className="font-serif text-base text-[#111111] font-medium">
+                      {place.name}
+                    </h5>
+                    <span className="text-xs font-semibold text-[#8C907E] uppercase tracking-wider bg-white px-2 py-0.5 border border-[#EAE8E2] flex-shrink-0">
+                      {place.distance.toFixed(1)} km
+                    </span>
                   </div>
-                  <button onClick={() => window.open(`https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}&zoom=17`, "_blank")}
-                          className="bg-slate-700 hover:bg-blue-600 text-slate-300 hover:text-white text-xs px-4 py-2 rounded-xl transition-colors whitespace-nowrap flex-shrink-0">
-                    View Map
-                  </button>
+
+                  {place.address && (
+                    <p className="text-xs text-[#606456] mb-1.5 flex items-start gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#8A8D83] mt-0.5 flex-shrink-0" />
+                      <span>{place.address}</span>
+                    </p>
+                  )}
+
+                  {place.phone && (
+                    <p className="text-xs text-[#606456] flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-[#8A8D83]" />
+                      <a href={`tel:${place.phone}`} className="hover:text-[#111111] underline">
+                        {place.phone}
+                      </a>
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-4 mt-3 border-t border-[#EAE8E2]/60 flex items-center justify-between text-xs">
+                  <span className="text-[11px] uppercase tracking-wider text-[#8A8D83]">
+                    {place.type}
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#111111] hover:text-[#8C907E] font-medium flex items-center gap-1 tracking-wider uppercase text-[11px]"
+                  >
+                    <span>Get Directions</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {location && !loading && places.length === 0 && !error && (
-        <div className="text-center py-12 text-slate-500">
-          <p className="text-4xl mb-3">🔍</p>
-          <p>No places found within {getRadiusLabel()}.</p>
-          <p className="text-sm mt-1">Try increasing the search radius.</p>
+      ) : location && !loading ? (
+        <div className="py-10 text-center text-[#8A8D83] bg-[#FAF9F6] border border-[#EAE8E2]">
+          <Building2 className="w-8 h-8 mx-auto text-[#D3D7C9] mb-2" />
+          <p className="font-serif text-lg text-[#111111]">No {activeType}s found within {radiusKm}km</p>
+          <p className="text-xs mt-1">Try expanding the search radius using the controls above.</p>
         </div>
-      )}
-
-      <p className="text-xs text-slate-600 text-center">
-        Powered by OpenStreetMap
-      </p>
+      ) : null}
     </div>
   );
 }

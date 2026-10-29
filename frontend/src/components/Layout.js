@@ -1,18 +1,23 @@
-import { motion } from "framer-motion";
-import Sidebar from "./Sidebar";
+import React from "react";
+import Header from "./Header";
+import Footer from "./Footer";
 import Chatbot from "./Chatbot";
 
 export default function Layout({ children }) {
   return (
-    <div className="flex min-h-screen bg-premium">
-      <Sidebar />
-      <motion.main
-        className="flex-1 overflow-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}>
+    <div className="min-h-screen flex flex-col bg-[#F8F7F4] text-[#4A4D45]">
+      {/* Kaira Header Navigation */}
+      <Header />
+
+      {/* Main Page Content */}
+      <main className="flex-1 w-full animate-fade-in">
         {children}
-      </motion.main>
+      </main>
+
+      {/* Kaira Multi-Column Footer */}
+      <Footer />
+
+      {/* Floating Kaira Medical AI Assistant */}
       <Chatbot />
     </div>
   );

@@ -3,67 +3,63 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
-      colors: {
-        primary: {
-          50 : "#eff6ff",
-          100: "#dbeafe",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          900: "#1e3a8a",
-        },
-        accent: {
-          cyan  : "#06b6d4",
-          purple: "#8b5cf6",
-          pink  : "#ec4899",
-        },
-        glass: {
-          100: "rgba(255,255,255,0.05)",
-          200: "rgba(255,255,255,0.08)",
-          300: "rgba(255,255,255,0.12)",
-        },
+      fontFamily: {
+        serif: ['"Marcellus"', "Georgia", "serif"],
+        sans: ['"Jost"', "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
       },
-      backgroundImage: {
-        "gradient-radial"  : "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-premium" : "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
-        "gradient-card"    : "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1))",
-        "gradient-glow"    : "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+      colors: {
+        kaira: {
+          bg: "#F8F7F4",
+          surface: "#FFFFFF",
+          muted: "#F1F1F0",
+          card: "#FFFFFF",
+          border: "#EAE8E2",
+          borderDark: "#111111",
+          primary: "#8C907E",
+          primaryDark: "#747866",
+          primaryLight: "#F2F3EF",
+          dark: "#111111",
+          body: "#4A4D45",
+          subtle: "#8A8D83",
+        },
+        primary: {
+          50: "#F5F6F3",
+          100: "#EAECE5",
+          200: "#D3D7C9",
+          300: "#B9BFAB",
+          400: "#A3AA93",
+          500: "#8C907E", // Kaira signature sage
+          600: "#757967",
+          700: "#5D6151",
+          800: "#45483B",
+          900: "#2B2E24",
+        },
+        slate: {
+          850: "#151F33",
+        }
+      },
+      letterSpacing: {
+        widest: ".18em",
+        wider: ".1em",
+        wide: ".05em",
       },
       boxShadow: {
-        "glow-blue"  : "0 0 20px rgba(59,130,246,0.3), 0 0 40px rgba(59,130,246,0.1)",
-        "glow-purple": "0 0 20px rgba(139,92,246,0.3), 0 0 40px rgba(139,92,246,0.1)",
-        "glow-cyan"  : "0 0 20px rgba(6,182,212,0.3), 0 0 40px rgba(6,182,212,0.1)",
-        "glass"      : "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
-        "premium"    : "0 25px 50px rgba(0,0,0,0.5), 0 0 100px rgba(59,130,246,0.1)",
-      },
-      backdropBlur: {
-        xs: "2px",
+        kaira: "0 4px 20px rgba(0,0,0,0.04)",
+        "kaira-hover": "0 10px 30px rgba(0,0,0,0.08)",
+        "kaira-modal": "0 20px 60px rgba(0,0,0,0.12)",
       },
       animation: {
-        "pulse-slow"  : "pulse 3s cubic-bezier(0.4,0,0.6,1) infinite",
-        "float"       : "float 6s ease-in-out infinite",
-        "glow"        : "glow 2s ease-in-out infinite alternate",
-        "shimmer"     : "shimmer 2s linear infinite",
-        "scan"        : "scan 2s ease-in-out infinite",
-        "spin-slow"   : "spin 8s linear infinite",
+        "fade-in": "fadeIn 0.4s ease-out",
+        "slide-up": "slideUp 0.4s ease-out",
       },
       keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%"     : { transform: "translateY(-10px)" },
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
-        glow: {
-          "0%"  : { boxShadow: "0 0 20px rgba(59,130,246,0.3)" },
-          "100%": { boxShadow: "0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(139,92,246,0.3)" },
-        },
-        shimmer: {
-          "0%"  : { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        },
-        scan: {
-          "0%, 100%": { transform: "translateY(0)", opacity: "1" },
-          "50%"     : { transform: "translateY(100%)", opacity: "0.5" },
+        slideUp: {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
     },

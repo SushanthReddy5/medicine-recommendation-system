@@ -1,19 +1,19 @@
-import { motion } from "framer-motion";
+import React from "react";
 
 export default function GlassCard({
-  children, className = "", hover = true,
-  glow = false, onClick, delay = 0
+  children,
+  className = "",
+  hover = true,
+  onClick,
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={hover ? { y: -4, scale: 1.01 } : {}}
+    <div
       onClick={onClick}
-      className={`glass rounded-2xl ${hover ? "glass-hover cursor-pointer" : ""}
-                  ${glow ? "glow-blue" : ""} transition-all duration-300 ${className}`}>
+      className={`kaira-card rounded-lg p-6 ${
+        hover ? "hover:-translate-y-1 hover:shadow-kaira-hover cursor-pointer" : ""
+      } transition-all duration-300 ${className}`}
+    >
       {children}
-    </motion.div>
+    </div>
   );
 }

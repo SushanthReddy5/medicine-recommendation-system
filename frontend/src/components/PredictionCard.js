@@ -1,135 +1,136 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle, ChevronDown, ChevronUp, Pill, Info, ShieldCheck } from "lucide-react";
 
-const SEVERITY_CONFIG = {
-  mild    : { bg: "from-green-500/10 to-green-600/5",   border: "border-green-500/20", text: "text-green-400",  bar: "from-green-400 to-green-500",  badge: "bg-green-500/10 text-green-400 border-green-500/20" },
-  moderate: { bg: "from-yellow-500/10 to-yellow-600/5", border: "border-yellow-500/20",text: "text-yellow-400", bar: "from-yellow-400 to-orange-400", badge: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"},
-  severe  : { bg: "from-red-500/10 to-red-600/5",       border: "border-red-500/20",   text: "text-red-400",    bar: "from-red-400 to-red-500",       badge: "bg-red-500/10 text-red-400 border-red-500/20" },
-};
-
-const RANK_CONFIG = [
-  { label: "Best Match", border: "border-blue-500/30", glow: "shadow-glow-blue", badge: "bg-blue-600 text-white" },
-  { label: "2nd Match",  border: "border-slate-600/30", glow: "",                badge: "bg-slate-700 text-slate-300" },
-  { label: "3rd Match",  border: "border-slate-700/30", glow: "",                badge: "bg-slate-800 text-slate-400" },
-];
-
-export default function PredictionCard({ prediction, rank }) {
+export default function PredictionCard({ prediction, rank = 0 }) {
   const { user } = useAuth();
-  const [showSideEffects, setShowSideEffects] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const { disease, medicine, confidence, description, side_effects, severity } = prediction;
-  const sev = severity?.toLowerCase() || "mild";
-  const sc  = SEVERITY_CONFIG[sev] || SEVERITY_CONFIG.mild;
-  const rc  = RANK_CONFIG[rank]    || RANK_CONFIG[2];
+  
+  const sev = (severity || "mild").toLowerCase();
+  
+  const rankLabels = ["Top Match", "Alternative 1", "Alternative 2"];
+  const rankLabel = rankLabels[rank] || `Match ${rank + 1}`;
 
+  // Severity style mapping
+  const severityBadge = {
+    mild: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    moderate: "bg-amber-50 text-amber-800 border-amber-200",
+    severe: "bg-rose-50 text-rose-800 border-rose-200",
+  }[sev] || "bg-emerald-50 text-emerald-800 border-emerald-200";
+
+  // Check for allergy warnings in user's profile
   const userAllergies = user?.allergies || "";
   const hasAllergyWarning =
-    userAllergies && userAllergies.toLowerCase() !== "none" &&
-    userAllergies.toLowerCase().split(/[,\s]+/).some(a =>
-      a.length > 2 && medicine.toLowerCase().includes(a.toLowerCase())
-    );
+    userAllergies &&
+    userAllergies.toLowerCase() !== "none" &&
+    userAllergies
+      .toLowerCase()
+      .split(/[,\s]+/)
+      .some(
+        (a) => a.length > 2 && medicine && medicine.toLowerCase().includes(a.toLowerCase())
+      );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{ y: -4, scale: 1.02 }}
-      transition={{ duration: 0.3 }}
-      className={`bg-gradient-to-br ${sc.bg} border-2 ${hasAllergyWarning ? "border-orange-500/50" : rc.border}
-                  rounded-2xl p-5 backdrop-blur-sm ${rc.glow} transition-all duration-300`}>
+    <div className={`kaira-card bg-white border ${rank === 0 ? "border-[#8C907E]" : "border-[#EAE8E2]"} p-6 flex flex-col justify-between transition-all duration-300 relative`}>
+      {/* Top Banner Tag */}
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <span className={`text-[11px] font-semibold uppercase tracking-[0.15em] px-3 py-1 ${
+            rank === 0 ? "bg-[#111111] text-white" : "bg-[#F1F1F0] text-[#606456]"
+          }`}>
+            {rankLabel}
+          </span>
+          <span className={`text-[11px] font-medium uppercase tracking-[0.12em] px-2.5 py-1 border rounded-full ${severityBadge}`}>
+            Severity: {sev}
+          </span>
+        </div>
 
-      {/* Rank + Severity */}
-      <div className="flex items-center justify-between mb-4">
-        <span className={`text-xs font-bold px-3 py-1 rounded-full ${rc.badge}`}>
-          {rc.label}
-        </span>
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full border capitalize ${sc.badge}`}>
-          {sev}
-        </span>
-      </div>
-
-      {/* Allergy warning */}
-      <AnimatePresence>
+        {/* Allergy Warning Alert */}
         {hasAllergyWarning && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                      className="bg-orange-500/10 border border-orange-500/30 rounded-xl
-                                 p-2.5 mb-3 flex items-center gap-2">
-            <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}>
-              ⚠️
-            </motion.span>
-            <p className="text-orange-300 text-xs font-semibold">
-              Possible allergy to <strong>{medicine}</strong>. Consult doctor!
-            </p>
-          </motion.div>
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-2.5 text-xs">
+            <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold uppercase tracking-wider text-[11px]">Allergy Conflict Warning</p>
+              <p className="mt-0.5">Your profile specifies an allergy matching <strong>{medicine}</strong>. Do not use without physician review.</p>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
 
-      {/* Disease name */}
-      <h3 className="text-lg font-bold text-white mb-1">{disease}</h3>
+        {/* Disease Title */}
+        <h3 className="font-serif text-2xl text-[#111111] font-normal mb-3">
+          {disease}
+        </h3>
 
-      {/* Animated confidence bar */}
-      <div className="mb-4">
-        <div className="flex justify-between text-xs text-slate-400 mb-1.5">
-          <span>Confidence</span>
-          <span className="font-bold text-white">{confidence}%</span>
+        {/* Confidence Progress Meter */}
+        <div className="mb-5 pb-5 border-b border-[#F1F1F0]">
+          <div className="flex justify-between items-center text-xs mb-1.5">
+            <span className="uppercase tracking-[0.14em] text-[#8A8D83] font-medium text-[11px]">
+              Diagnostic Confidence
+            </span>
+            <span className="font-serif text-base text-[#111111] font-semibold">
+              {confidence}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-[#F1F1F0] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#8C907E] transition-all duration-700 ease-out"
+              style={{ width: `${confidence}%` }}
+            />
+          </div>
         </div>
-        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${confidence}%` }}
-            transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-            className={`h-full rounded-full bg-gradient-to-r ${sc.bar}`}/>
+
+        {/* Recommended Prescription Block */}
+        <div className="bg-[#FAF9F6] border border-[#EAE8E2] p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2 text-[#8C907E]">
+            <Pill className="w-4 h-4" />
+            <span className="text-[11px] uppercase tracking-[0.15em] font-semibold text-[#111111]">
+              Recommended Medication
+            </span>
+          </div>
+          <p className="font-serif text-xl text-[#111111] font-medium">
+            {medicine}
+          </p>
+          {description && (
+            <p className="text-xs text-[#606456] mt-2 leading-relaxed">
+              {description}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Medicine */}
-      <div className="glass rounded-xl p-3 mb-3">
-        <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">💊 Recommended Medicine</p>
-        <p className={`font-bold text-base ${hasAllergyWarning ? "text-orange-400" : "text-blue-400"}`}>
-          {medicine}
-        </p>
-        <p className="text-slate-300 text-sm mt-1 leading-relaxed">{description}</p>
-      </div>
+      {/* Side Effects / Precautions Expandable Details */}
+      <div className="pt-2">
+        {side_effects && (
+          <div className="border-t border-[#F1F1F0] pt-3">
+            <button
+              type="button"
+              onClick={() => setShowDetails(!showDetails)}
+              className="w-full flex items-center justify-between text-xs uppercase tracking-wider text-[#606456] hover:text-[#111111] py-1 transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-[#8A8D83]" />
+                Side Effects & Safety
+              </span>
+              {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
 
-      {/* Side effects toggle */}
-      <motion.button
-        onClick={() => setShowSideEffects(!showSideEffects)}
-        className="w-full flex items-center justify-between text-xs
-                   text-slate-500 hover:text-slate-300 transition-colors py-1">
-        <span className="flex items-center gap-1.5">
-          <span className="text-yellow-500">⚠️</span> Side Effects
-        </span>
-        <motion.span animate={{ rotate: showSideEffects ? 180 : 0 }}>▼</motion.span>
-      </motion.button>
-      <AnimatePresence>
-        {showSideEffects && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
-            <p className="text-slate-400 text-sm mt-2 pt-2 border-t border-white/5">
-              {side_effects}
-            </p>
-          </motion.div>
+            {showDetails && (
+              <div className="mt-2.5 p-3 bg-amber-50/50 border border-amber-200/60 text-xs text-[#606456] leading-relaxed">
+                <p className="font-medium text-amber-900 mb-1">Potential Side Effects:</p>
+                <p>{side_effects}</p>
+              </div>
+            )}
+          </div>
         )}
-      </AnimatePresence>
 
-      {/* Age warning */}
-      {user?.age && parseInt(user.age) < 12 && (
-        <div className="mt-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2.5">
-          <p className="text-yellow-300 text-xs">
-            👶 Child dosage may differ. Consult a pediatrician.
-          </p>
+        <div className="mt-4 pt-3 border-t border-[#F1F1F0] flex items-center justify-between text-[11px] text-[#8A8D83]">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#8C907E]" /> Verified ML Mapping
+          </span>
+          <span>Top {rank + 1} Recommendation</span>
         </div>
-      )}
-
-      {/* Severe warning */}
-      {sev === "severe" && (
-        <motion.div animate={{ opacity: [1, 0.7, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                    className="mt-3 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-          <p className="text-red-300 text-xs">
-            🚨 <strong>Severe condition.</strong> Consult a doctor immediately.
-          </p>
-        </motion.div>
-      )}
-    </motion.div>
+      </div>
+    </div>
   );
 }

@@ -2,95 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0a0a1a;
-  color: #e2e8f0;
+  font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #F8F7F4;
+  color: #4A4D45;
   min-height: 100vh;
+  letter-spacing: 0.02rem;
   overflow-x: hidden;
 }
 
-/* Premium scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #3b82f6, #8b5cf6); border-radius: 3px; }
-
-/* Glass morphism utility */
-.glass {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.1);
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: 'Marcellus', Georgia, serif;
+  color: #111111;
+  font-weight: 400;
+  letter-spacing: 0.02rem;
 }
 
-.glass-hover:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(59,130,246,0.4);
+/* Custom scrollbar matching Kaira aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F1F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #8C907E;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #747866;
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #60a5fa, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Kaira Buttons */
+.btn-kaira-dark {
+  background-color: #111111;
+  color: #FFFFFF;
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.75rem 1.75rem;
+  transition: all 0.25s ease;
+  border: 1px solid #111111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-kaira-dark:hover:not(:disabled) {
+  background-color: #8C907E;
+  border-color: #8C907E;
+  color: #FFFFFF;
 }
 
-.gradient-text-cyan {
-  background: linear-gradient(135deg, #06b6d4, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.btn-kaira-primary {
+  background-color: #8C907E;
+  color: #FFFFFF;
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.75rem 1.75rem;
+  transition: all 0.25s ease;
+  border: 1px solid #8C907E;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-kaira-primary:hover:not(:disabled) {
+  background-color: #747866;
+  border-color: #747866;
+  color: #FFFFFF;
 }
 
-/* Glow effects */
-.glow-blue   { box-shadow: 0 0 20px rgba(59,130,246,0.4); }
-.glow-purple { box-shadow: 0 0 20px rgba(139,92,246,0.4); }
-.glow-cyan   { box-shadow: 0 0 20px rgba(6,182,212,0.4); }
-
-/* Animated gradient border */
-.gradient-border {
-  position: relative;
-  background: linear-gradient(#0f172a, #0f172a) padding-box,
-              linear-gradient(135deg, #3b82f6, #8b5cf6) border-box;
-  border: 1px solid transparent;
+.btn-kaira-outline {
+  background-color: transparent;
+  color: #111111;
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.75rem 1.75rem;
+  transition: all 0.25s ease;
+  border: 1px solid #111111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-kaira-outline:hover:not(:disabled) {
+  background-color: #111111;
+  color: #FFFFFF;
 }
 
-/* Shimmer loading */
+/* Kaira Card Style */
+.kaira-card {
+  background-color: #FFFFFF;
+  border: 1px solid #EAE8E2;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+.kaira-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  border-color: #D9D6CE;
+}
+
+/* Shimmer Loading Effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 .shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background: linear-gradient(90deg, #F1F1F0 25%, #E5E3DC 50%, #F1F1F0 75%);
   background-size: 200% 100%;
-  animation: shimmer 2s linear infinite;
+  animation: shimmer 1.8s linear infinite;
 }
 
-/* Premium background */
-.bg-premium {
-  background: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.08) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.05) 0%, transparent 50%),
-              #0a0a1a;
-}
-
-/* Input focus glow */
+/* Input Focus Glow */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
 }
-
-/* Card hover lift */
-.card-hover {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 40px rgba(59,130,246,0.1);
-}
-
-/* Pulse ring animation */
-@keyframes ping-slow {
-  0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(1.5); opacity: 0; }
-}
-.ping-slow { animation: ping-slow 2s cubic-bezier(0,0,0.2,1) infinite; }
