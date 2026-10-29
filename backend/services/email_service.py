@@ -90,3 +90,54 @@ def send_reset_email(to_email: str, reset_token: str) -> bool:
     except Exception as e:
         print(f"❌ Email send failed: {e}")
         return False
+
+def send_reminder_email(to_email: str, medicine: str, dosage: str = "", time_str: str = "", notes: str = "") -> bool:
+    """Send medicine dose alert email to patient via Gmail."""
+    dosage_line = f"<p style='margin: 0 0 8px; font-size: 14px; color: #475569;'><strong>Prescribed Dosage:</strong> <span style='color: #0f172a;'>{dosage}</span></p>" if dosage else ""
+    notes_line = f"<p style='margin: 0; font-size: 14px; color: #475569;'><strong>Instructions:</strong> <span style='color: #0f172a;'>{notes}</span></p>" if notes else ""
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #F8F7F4; color: #111111; padding: 24px; margin: 0;">
+      <div style="max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 8px; padding: 32px; border: 1px solid #EAE8E2;">
+        <div style="border-bottom: 2px solid #8C907E; padding-bottom: 16px; margin-bottom: 20px;">
+          <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #8C907E; font-weight: 600;">Prescription Alert</span>
+          <h2 style="margin: 6px 0 0; font-size: 22px; color: #111111; font-weight: 600;">Time to take {medicine}</h2>
+        </div>
+
+        <div style="background: #FAF9F6; border: 1px solid #EAE8E2; padding: 16px 20px; margin-bottom: 20px; border-radius: 4px;">
+          <p style="margin: 0 0 8px; font-size: 14px; color: #475569;"><strong>Scheduled Time:</strong> <span style="color: #0f172a; font-weight: 600;">{time_str}</span></p>
+          {dosage_line}
+          {notes_line}
+        </div>
+
+        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 20px;">
+          Adherence to your prescribed timing ensures optimal clinical recovery. Please take this dose as recommended.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #F1F1F0; margin: 20px 0;" />
+        <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">
+          MediAssist · Clinical Medication Manager
+        </p>
+      </div>
+    </body>
+    </html>
+    """
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"💊 Medicine Reminder: Time to take {medicine}" + (f" ({dosage})" if dosage else "")
+        msg["From"]    = f"MediAssist <{GMAIL_USER}>"
+        msg["To"]      = to_email
+        msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(GMAIL_USER, GMAIL_PASSWORD)
+            server.sendmail(GMAIL_USER, to_email, msg.as_string())
+
+        print(f"✅ Reminder email sent to {to_email} for {medicine}")
+        return True
+    except Exception as e:
+        print(f"❌ Reminder email failed: {e}")
+        return False

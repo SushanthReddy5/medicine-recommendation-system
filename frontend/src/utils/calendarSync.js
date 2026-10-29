@@ -106,3 +106,4 @@ export function openGoogleCalendar(reminder, time) {
     console.error("Error opening Google Calendar:", err);
   }
 }
+

@@ -8,6 +8,7 @@ from routes.history      import history_bp
 from routes.chat         import chat_bp
 from routes.interactions import interactions_bp
 from routes.auth         import auth_bp
+from routes.reminders    import reminders_bp
 
 def create_app(env="development"):
     app = Flask(__name__)
@@ -23,6 +24,7 @@ def create_app(env="development"):
     app.register_blueprint(chat_bp)
     app.register_blueprint(interactions_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(reminders_bp)
 
     @app.route("/api/health")
     def health():

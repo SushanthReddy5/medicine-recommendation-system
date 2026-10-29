@@ -10,12 +10,15 @@ import {
   Volume2,
   Smartphone,
   ExternalLink,
-  Info,
+  Mail,
 } from "lucide-react";
 import { NOTIF_EVENT, playReminderChime, getLocalDateString } from "./ReminderNotifier";
 import { downloadIcsFile, openGoogleCalendar } from "../utils/calendarSync";
+import { useAuth } from "../context/AuthContext";
 
 const STORAGE_KEY = "mediassist_reminders";
+const EMAIL_KEY = "mediassist_reminder_email";
+const API_URL = process.env.REACT_APP_API_URL || "";
 
 function loadReminders() {
   try {
@@ -35,22 +38,34 @@ function saveReminders(r) {
 }
 
 export default function MedicineReminder() {
+  const { user } = useAuth();
   const [reminders, setReminders] = useState(loadReminders);
   const [showForm, setShowForm] = useState(false);
   const [notifPerm, setNotifPerm] = useState(
     typeof Notification !== "undefined" ? Notification.permission : "denied"
   );
   const [testTriggered, setTestTriggered] = useState(false);
-  const [justSavedMed, setJustSavedMed] = useState(null);
   const [downloadFeedback, setDownloadFeedback] = useState(null);
 
-  // Form state - Start with empty times (no predefined 08:00)
+  // Email state for regular phone/device notifications when browser is closed
+  const [reminderEmail, setReminderEmail] = useState(() => {
+    return localStorage.getItem(EMAIL_KEY) || (user && user.email) || "";
+  });
+
+  // Form state - Clean empty times (no predefined 08:00)
   const [medName, setMedName] = useState("");
   const [dosage, setDosage] = useState("");
   const [duration, setDuration] = useState("7");
   const [notes, setNotes] = useState("");
   const [times, setTimes] = useState([]);
   const [newTime, setNewTime] = useState("");
+
+  // Sync with auth user email if available
+  useEffect(() => {
+    if (user && user.email && !localStorage.getItem(EMAIL_KEY)) {
+      setReminderEmail(user.email);
+    }
+  }, [user]);
 
   // Keep state synchronized with global updates from ReminderNotifier or other tabs
   useEffect(() => {
@@ -63,6 +78,23 @@ export default function MedicineReminder() {
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
+
+  // Sync reminders to backend so alerts dispatch even if browser is closed
+  const syncWithBackend = async (allReminders, email) => {
+    if (!email) return;
+    try {
+      await fetch(`${API_URL}/api/reminders/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reminders: allReminders,
+          email: email.trim(),
+        }),
+      });
+    } catch (e) {
+      console.warn("Backend sync failed:", e);
+    }
+  };
 
   const requestNotification = async () => {
     if (typeof Notification === "undefined") return;
@@ -105,6 +137,25 @@ export default function MedicineReminder() {
       })
     );
 
+    // If email provided, send immediate test email alert
+    if (reminderEmail && reminderEmail.includes("@")) {
+      try {
+        fetch(`${API_URL}/api/reminders/test-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: reminderEmail.trim(),
+            medicine: medName.trim() || "Amoxicillin / Augmentin",
+            dosage: dosage.trim() || "500 mg",
+            time: currentTimeStr,
+            notes: "Test reminder notification dispatched from MediAssist.",
+          }),
+        });
+      } catch (e) {
+        console.warn("Test email dispatch error:", e);
+      }
+    }
+
     setTestTriggered(true);
     setTimeout(() => setTestTriggered(false), 4000);
   };
@@ -129,6 +180,7 @@ export default function MedicineReminder() {
       times: [...times].sort(),
       duration: parseInt(duration, 10) || 7,
       notes: notes.trim(),
+      email: reminderEmail.trim(),
       active: true,
       created: new Date().toISOString(),
       taken: {},
@@ -137,10 +189,12 @@ export default function MedicineReminder() {
     setReminders(updated);
     saveReminders(updated);
 
-    // Offer immediate device calendar sync
-    setJustSavedMed(newReminder);
+    if (reminderEmail) {
+      localStorage.setItem(EMAIL_KEY, reminderEmail.trim());
+      syncWithBackend(updated, reminderEmail);
+    }
 
-    // Reset form to clean empty state
+    // Reset form
     setMedName("");
     setDosage("");
     setDuration("7");
@@ -156,12 +210,14 @@ export default function MedicineReminder() {
     );
     setReminders(updated);
     saveReminders(updated);
+    if (reminderEmail) syncWithBackend(updated, reminderEmail);
   };
 
   const deleteReminder = (id) => {
     const updated = reminders.filter((r) => r.id !== id);
     setReminders(updated);
     saveReminders(updated);
+    if (reminderEmail) syncWithBackend(updated, reminderEmail);
   };
 
   const markTaken = (id, time) => {
@@ -206,11 +262,21 @@ export default function MedicineReminder() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {notifPerm !== "granted" && (
+            <button
+              type="button"
+              onClick={requestNotification}
+              className="btn-kaira-outline text-xs !py-3 !px-4"
+            >
+              Enable Browser Alerts
+            </button>
+          )}
+
           <button
             type="button"
             onClick={triggerTestNotification}
             className="btn-kaira-outline text-xs !py-3 !px-4 flex items-center gap-1.5"
-            title="Test audio chime, banner alert, and desktop notification"
+            title="Test audio chime, banner alert, and notification"
           >
             <Volume2 className="w-4 h-4 text-[#8C907E]" />
             <span>Test Alert & Chime</span>
@@ -233,86 +299,12 @@ export default function MedicineReminder() {
         </div>
       </div>
 
-      {/* Offline & Closed Browser Notification Guidance Banner */}
-      <div className="p-4 bg-[#FAF9F6] border border-[#EAE8E2] mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-white border border-[#EAE8E2] flex items-center justify-center text-[#8C907E] flex-shrink-0 mt-0.5">
-            <Smartphone className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-[#111111]">
-                Regular Notifications Even When Browser Is Closed:
-              </span>
-              <span className="inline-flex items-center px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-[#8C907E] text-white">
-                Device Calendar Sync Ready
-              </span>
-            </div>
-            <p className="text-[11px] text-[#8A8D83] mt-1 leading-relaxed">
-              When Chrome is completely quit, web pages cannot run in-memory code. To receive guaranteed native system alarms and notifications on your Mac, iPhone, Android, or PC when Chrome is closed, click <strong>"Sync to Device Calendar (.ics)"</strong> on any medication below. Your native Calendar will ring alarms at your scheduled times automatically.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0 self-end md:self-auto">
-          {notifPerm !== "granted" && (
-            <button
-              type="button"
-              onClick={requestNotification}
-              className="btn-kaira-outline text-[11px] !py-2 !px-4"
-            >
-              Enable Browser Push
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Just-Saved Medication Sync Prompt */}
-      {justSavedMed && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs mb-6 rounded-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <div>
-              <span className="font-semibold text-[#111111]">
-                Saved schedule for {justSavedMed.medicine}!
-              </span>
-              <p className="text-[11px] text-[#606456] mt-0.5">
-                Sync to your device calendar now so your system alarms alert you even when Chrome is closed:
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                downloadIcsFile(justSavedMed);
-                setDownloadFeedback(justSavedMed.medicine);
-                setJustSavedMed(null);
-                setTimeout(() => setDownloadFeedback(null), 4000);
-              }}
-              className="btn-kaira-dark text-[11px] !py-2 !px-4 flex items-center gap-1.5"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-white" />
-              <span>Download Device Alarms (.ics)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setJustSavedMed(null)}
-              className="px-2 py-1.5 text-xs text-[#8A8D83] hover:text-[#111111]"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Download Feedback Banner */}
       {downloadFeedback && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>
-            Calendar schedule for <strong>{downloadFeedback}</strong> downloaded! Click the downloaded file to add daily alarms to Apple Calendar, Outlook, or Windows Calendar.
+            Calendar schedule for <strong>{downloadFeedback}</strong> downloaded!
           </span>
         </div>
       )}
@@ -322,7 +314,8 @@ export default function MedicineReminder() {
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-6 flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>
-            Test alert triggered! You should hear the 3-tone chime, see the upper-right alert card, and receive a system notification.
+            Test alert triggered! You should hear the chime and see the notification banner.
+            {reminderEmail && " A test notification has also been sent to your email."}
           </span>
         </div>
       )}
@@ -384,6 +377,21 @@ export default function MedicineReminder() {
                 className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
               />
             </div>
+          </div>
+
+          {/* Optional Notification Email for offline & closed-browser regular delivery */}
+          <div>
+            <label className="block text-xs uppercase tracking-[0.14em] font-semibold text-[#111111] mb-1.5 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-[#8C907E]" />
+              <span>Notification Email (For Phone & Offline Delivery)</span>
+            </label>
+            <input
+              type="email"
+              value={reminderEmail}
+              onChange={(e) => setReminderEmail(e.target.value)}
+              placeholder="e.g. yourname@gmail.com"
+              className="w-full bg-white border border-[#EAE8E2] focus:border-[#111111] px-4 py-2.5 text-sm text-[#111111] placeholder-[#A8A59C]"
+            />
           </div>
 
           {/* Time Slots - No predefined time */}
@@ -454,7 +462,7 @@ export default function MedicineReminder() {
           <Clock className="w-10 h-10 mx-auto text-[#D3D7C9] mb-3" />
           <h4 className="font-serif text-lg text-[#111111]">No Medication Schedules Active</h4>
           <p className="text-xs text-[#8A8D83] mt-1 max-w-sm mx-auto">
-            Add your daily prescribed medicines to monitor daily adherence and sync alarms to your device calendar.
+            Add your daily prescribed medicines to monitor daily adherence and receive scheduled alerts.
           </p>
         </div>
       ) : (
@@ -556,7 +564,7 @@ export default function MedicineReminder() {
                   })}
                 </div>
 
-                {/* Closed Browser / Device Calendar Sync Bar */}
+                {/* Sync Actions Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#F1F1F0] bg-[#FAF9F6] -mx-6 -mb-6 px-6 py-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
@@ -567,10 +575,10 @@ export default function MedicineReminder() {
                         setTimeout(() => setDownloadFeedback(null), 4000);
                       }}
                       className="btn-kaira-outline text-[11px] !py-1.5 !px-3 flex items-center gap-1.5 text-[#111111] hover:border-[#111111] bg-white"
-                      title="Sync to Apple Calendar, Outlook, or Windows Calendar so alarms ring when Chrome is closed"
+                      title="Sync to Apple Calendar, Outlook, or Windows Calendar"
                     >
                       <Smartphone className="w-3.5 h-3.5 text-[#8C907E]" />
-                      <span>Sync to Device Calendar (.ics)</span>
+                      <span>Sync to Calendar (.ics)</span>
                     </button>
 
                     <button
@@ -584,11 +592,6 @@ export default function MedicineReminder() {
                       <ExternalLink className="w-3 h-3 text-[#8A8D83]" />
                     </button>
                   </div>
-
-                  <span className="text-[10px] text-[#8A8D83] uppercase tracking-wider font-medium flex items-center gap-1">
-                    <Info className="w-3 h-3 text-[#8C907E]" />
-                    <span>Rings OS alarms even with browser closed</span>
-                  </span>
                 </div>
               </div>
             );
